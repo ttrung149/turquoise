@@ -34,8 +34,4 @@ class Logger:
 	def print_logs_to_terminal(self):
 		for x in self.logs:
 			print(x)
-
-
-
-
-
+			
