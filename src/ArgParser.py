@@ -17,7 +17,7 @@ class ArgParser:
 		g.add_argument("-a", "--analyze", metavar='path', help="analyze VHDL file")
 		g.add_argument("-c", "--compile", metavar='path', help="compile VHDL file")
 		g.add_argument("-l", "--lint", metavar='path', help="lint VHDL file")
-		g.add_argument("-r", "--run", metavar='unit', help="run VHDL unit with gtkwave")
+		g.add_argument("-w", "--wave", metavar='unit', help="generate waveform of VHDL unit")
 		g.add_argument("-u", "--upload", metavar='path', help="upload VHDL file to board")
 
 		args = self.parser.parse_args()
@@ -54,8 +54,8 @@ class ArgParser:
 				print('Invalid file/dir path.')
 
 		#Elaborate, run, simulate unit on gtkwave
-		elif args.run:
-			self._run_file(args.run)
+		elif args.wave:
+			self._run_file(args.wave)
 
 		#Upload file to board
 		elif args.upload:
