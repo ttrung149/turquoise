@@ -21,6 +21,10 @@ class Logger:
 		self.logs = logs
 		self.filename = filename
 
+	#Add a new log to the logger
+	def add_log(self, log):
+		self.logs.append(log)
+
 	#Pretty print the logs to the file
 	def print_logs_to_file(self):
 		original_stdout = sys.stdout
@@ -34,4 +38,3 @@ class Logger:
 	def print_logs_to_terminal(self):
 		for x in self.logs:
 			print(x)
-			
