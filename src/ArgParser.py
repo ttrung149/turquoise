@@ -12,20 +12,24 @@ class ArgParser:
 
 		#Create ArgParse with options
 		self.parser = argparse.ArgumentParser(description='VHDL Linter + Compilation Toolchain')
-		self.parser.add_argument("-t", "--tokenize", help="tokenize VHDL file")
-		self.parser.add_argument("-a", "--analyze", help="analyze VHDL file")
-		self.parser.add_argument("-c", "--compile", help="compile VHDL file")
-		self.parser.add_argument("-r", "--run", help="run VHDL file with gtkwave")
-		self.parser.add_argument("-u", "--upload", help="upload VHDL file to board")
-		self.parser.add_argument("-l", "--lint", help="lint VHDL file")
+		g = self.parser.add_mutually_exclusive_group()
+		g.add_argument("-t", "--tokenize", metavar='path', help="tokenize VHDL file")
+		g.add_argument("-a", "--analyze", metavar='path', help="analyze VHDL file")
+		g.add_argument("-c", "--compile", metavar='path', help="compile VHDL file")
+		g.add_argument("-l", "--lint", metavar='path', help="lint VHDL file")
+		g.add_argument("-r", "--run", metavar='unit', help="run VHDL unit with gtkwave")
+		g.add_argument("-u", "--upload", metavar='path', help="upload VHDL file to board")
 
 		args = self.parser.parse_args()
 
 		#Tokenize
 		if args.tokenize:
-			tokenize = Tokenize(args.tokenize)
-			tokens = tokenize.get_tokens()
-			print(tokens)
+			if os.path.isfile(args.tokenize):
+				tokenize = Tokenize(args.tokenize)
+				tokens = tokenize.get_tokens()
+				print(tokens)
+			else:
+				print('Invalid file path')
 
 		#Analyze file/list of files
 		elif args.analyze:
@@ -35,6 +39,8 @@ class ArgParser:
 				files = [y for x in os.walk(args.analyze) for y in glob(os.path.join(x[0], '*.vhdl'))]
 				for f in files:
 					self._analyze_file(f)
+			else:
+				print('Invalid file/dir path.')
 
 		#Compile file/list of files
 		elif args.compile:
@@ -44,6 +50,8 @@ class ArgParser:
 				files = [y for x in os.walk(args.compile) for y in glob(os.path.join(x[0], '*.vhdl'))]
 				for f in files:
 					self._compile_file(f)
+			else:
+				print('Invalid file/dir path.')
 
 		#Elaborate, run, simulate unit on gtkwave
 		elif args.run:
@@ -61,6 +69,8 @@ class ArgParser:
 				files = [y for x in os.walk(args.lint) for y in glob(os.path.join(x[0], '*.vhdl'))]
 				for f in files:
 					self._lint_file(f)
+			else:
+				print('Invalid file/dir path.')
 
 
 	def _analyze_file(self, filename):
