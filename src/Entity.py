@@ -113,11 +113,12 @@ def _parse_entity(_token_iter):
 
     # Parse end entity
     dfa.add_transition(EntityStateEnum.CLOSE_BRACK, EntityStateEnum.END_SEMICOLON, ';')
-    dfa.add_transition(EntityStateEnum.PORT, EntityStateEnum.END, 'end')
     dfa.add_transition(EntityStateEnum.END_SEMICOLON, EntityStateEnum.END, 'end')
+    dfa.add_transition(EntityStateEnum.PORT, EntityStateEnum.END, 'end')
     dfa.add_transition(EntityStateEnum.END,
                        EntityStateEnum.END_NAME, '_*_', _check_entity_name)
     dfa.add_transition(EntityStateEnum.END_NAME, EntityStateEnum.SUCCESS, ';')
+
 
     # =========================================================================
     # Token stream iteration
