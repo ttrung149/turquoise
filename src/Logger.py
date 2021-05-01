@@ -1,15 +1,3 @@
-
-#!/usr/bin/env python
-# -----------------------------------------------------------------------------
-#  Turquoise - VHDL linter and compilation toolchain
-#  Copyright (c) 2020-2021: Turquoise team
-#
-#  File name: logger.py
-#
-#  Description: Implementation of a logger class 
-#
-# -----------------------------------------------------------------------------
-
 from Error import Error, Warning
 from colored import fg, bg, attr
 import sys
@@ -20,6 +8,9 @@ class Logger:
 	def __init__(self, logs=[], filename="log.txt"):
 		self.logs = logs
 		self.filename = filename
+
+	def get_logs(self):
+		return self.logs
 
 	#Add a new log to the logger
 	def add_log(self, log):

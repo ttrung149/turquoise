@@ -3,5 +3,8 @@ import sys
 
 filename = sys.argv[1]
 tokenize = Tokenize(filename)
-tokenize.generate_tokens()
-tokenize.print_tokens()
+tokens = tokenize.get_tokens()
+token_iter = tokenize.get_token_iter()
+print(tokens)
+for t in token_iter:
+	print(t)

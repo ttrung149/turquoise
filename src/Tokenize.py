@@ -6,33 +6,36 @@ class Tokenize():
 
 	def __init__(self, filename=None):
 		self.filename = filename
-		self.tokens = []
 
-	def generate_tokens(self):
+	def get_token_stream(self):
 		# Open a source file
 		with open (self.filename, 'r') as fileHandle:
 			content = fileHandle.read()
 
 		#get a token generator
 		tokenStream = Tokenizer.GetVHDLTokenizer(content)
+		return tokenStream
+
+
+	def get_tokens(self):
+		tokenStream = self.get_token_stream()
 		# get a block generator
 		blockStream = TokenToBlockParser.Transform(tokenStream)
 
+		tokens = []
 		try:
 			for token in tokenStream:
-				self.tokens.append(token)
+				tokens.append(token)
 		except ParserException as ex:
 			print("ERROR: {0!s}".format(ex))
 		except NotImplementedError as ex:
 			print("NotImplementedError: {0!s}".format(ex))
 
-	#Get tokens
-	def get_tokens(self):
-		return self.tokens
+		return tokens
 
 
-	#Print tokens
-	def print_tokens(self):
-		for t in self.tokens:
-			print(t)
+	def get_token_iter (self):
+		tokenStream = self.get_token_stream()
+		tokenIter = iter(tokenStream)
+		return tokenIter
 
