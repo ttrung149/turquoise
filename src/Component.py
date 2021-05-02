@@ -1,3 +1,15 @@
+#!/usr/bin/env python
+# -----------------------------------------------------------------------------
+#  Turquoise - VHDL linter and compilation toolchain
+#  Copyright (c) 2020-2021: Turquoise team
+#
+#  File name: Component.py
+#
+#  Description: Implementation of DFAs that parse through the VHDL component
+#  syntax
+#
+# -----------------------------------------------------------------------------
+
 from Tokenize import Tokenize
 from State import DFA, State
 from pyVHDLParser.Token import StartOfDocumentToken, EndOfDocumentToken, \

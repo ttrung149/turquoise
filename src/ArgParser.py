@@ -1,3 +1,14 @@
+#!/usr/bin/env python
+# -----------------------------------------------------------------------------
+#  Turquoise - VHDL linter and compilation toolchain
+#  Copyright (c) 2020-2021: Turquoise team
+#
+#  File name: ArgParser.py
+#
+#  Description: Implementation of argument parser module.
+#  Check README.md for CLI usage.
+#
+# -----------------------------------------------------------------------------
 import argparse
 import sys
 import subprocess
@@ -8,11 +19,9 @@ from Tokenize import Tokenize
 from Linter import Linter
 
 class ArgParser:
-    
-    def __init__(self):
 
-        #Create ArgParse with options
-        self.parser = argparse.ArgumentParser(description='VHDL Linter + Compilation Toolchain')
+    def __init__(self):
+        self.parser = argparse.ArgumentParser(description='Turquoise: VHDL Linter + Compilation Toolchain')
         g = self.parser.add_mutually_exclusive_group()
         g.add_argument("-a", "--analyze", metavar='path', help="analyze VHDL file(s)")
         g.add_argument("-c", "--compile", metavar='path', help="compile VHDL file(s)")
@@ -25,7 +34,7 @@ class ArgParser:
         if args.analyze:
             self._analyze_file_dir(args.analyze)
 
-        #Compile file/dir of files
+        # Compile file/dir of files
         elif args.compile:
             if os.path.isfile(args.compile):
                 self._compile_file(args.compile)
@@ -36,17 +45,17 @@ class ArgParser:
             else:
                 print('Invalid file/dir path.')
 
-        #Analyze, elaborate, run required files, and simulate unit on gtkwave
+        # Analyze, elaborate, run required files, and simulate unit on gtkwave
         elif args.wave:
             self._analyze_file_dir(args.wave[0])
             self._run_file(args.wave[1])
 
-        #Upload unit to board
+        # Upload unit to board
         elif args.upload:
             self._analyze_file_dir(args.upload[0])
             self._upload_file(args.upload[0], args.upload[1])
 
-        #Lint file/dir of files
+        # Lint file/dir of files
         elif args.lint:
             if os.path.isfile(args.lint):
                 self._lint_file(args.lint)
@@ -58,9 +67,8 @@ class ArgParser:
                 print('Invalid file/dir path.')
 
 
-
     def _analyze_file(self, filename):
-        cmd = "./fpga-toolchain/bin/ghdl -a " + "\'" + filename + "\'"
+        cmd = "./dist/fpga-toolchain/bin/ghdl -a " + "\'" + filename + "\'"
         print('Analyzing file ' + filename + ' ...')
         returned_value = subprocess.run(cmd, shell=True)
         if returned_value.returncode == 0:
@@ -80,7 +88,7 @@ class ArgParser:
 
 
     def _compile_file(self, filename):
-        cmd = "./fpga-toolchain/bin/ghdl -c " + "\'" + filename + "\'"
+        cmd = "./dist/fpga-toolchain/bin/ghdl -c " + "\'" + filename + "\'"
         print('Compiling file ' + filename + ' ...')
         returned_value = subprocess.run(cmd, shell=True)
         if returned_value.returncode == 0:
@@ -89,7 +97,7 @@ class ArgParser:
 
 
     def _elaborate_unit(self, unitname):
-        cmd = "./fpga-toolchain/bin/ghdl -e " + unitname
+        cmd = "./dist/fpga-toolchain/bin/ghdl -e " + unitname
         print('Elaborating unit ' + unitname + ' ...')
         returned_value = subprocess.run(cmd, shell=True)
         if returned_value.returncode != 0:
@@ -98,7 +106,7 @@ class ArgParser:
 
 
     def _elaborate_run_unit(self, unitname):
-        cmd = "./fpga-toolchain/bin/ghdl -r " + unitname + " --vcd=" + unitname + ".vcd"
+        cmd = "./dist/fpga-toolchain/bin/ghdl -r " + unitname + " --vcd=" + unitname + ".vcd"
         print('Running unit ' + unitname + ' ...')
         returned_value = subprocess.run(cmd, shell=True)
         if returned_value.returncode != 0:
@@ -107,7 +115,7 @@ class ArgParser:
 
 
     def _run_gtkwave(self, filename):
-        cmd = "./gtkwave/Contents/MacOS/gtkwave -o " + filename
+        cmd = "./dist/gtkwave/Contents/MacOS/gtkwave -o " + filename
         print('Opening ' + filename + ' in gtkwave ...')
         returned_value = subprocess.run(cmd, shell=True)
         if returned_value.returncode != 0:
@@ -128,7 +136,7 @@ class ArgParser:
 #./fpga-toolchain/bin/iceprog Examples/FlashingLED/top.bin
 
     def _synthesize_unit(self, filepath, unitname):
-        cmd = "./fpga-toolchain/bin/yosys -q -p \'ghdl --std=08 "
+        cmd = "./dist/fpga-toolchain/bin/yosys -q -p \'ghdl --std=08 "
         if os.path.isfile(filepath):
             cmd = cmd + path + " "
         elif os.path.isdir(filepath):
@@ -146,7 +154,7 @@ class ArgParser:
 
 
     def _route_unit(self, filepath, unitname):
-        cmd = "./fpga-toolchain/bin/nextpnr-ice40 --up5k --package sg48 --pcf " + filepath + "/" + unitname + \
+        cmd = "./dist/fpga-toolchain/bin/nextpnr-ice40 --up5k --package sg48 --pcf " + filepath + "/" + unitname + \
         ".pcf --asc " + filepath + "/" + unitname + ".asc --json " + filepath + "/" + unitname + ".json --top " + unitname
         print('Routing ' + unitname + ' ...')
         returned_value = subprocess.run(cmd, shell=True)
@@ -157,7 +165,7 @@ class ArgParser:
 
 
     def _generate_bitstream(self, filepath, unitname):
-        cmd = "./fpga-toolchain/bin/icepack " + filepath + "/" + unitname + ".asc " + filepath + "/" + unitname + ".bin"
+        cmd = "./dist/fpga-toolchain/bin/icepack " + filepath + "/" + unitname + ".asc " + filepath + "/" + unitname + ".bin"
         print('Generating bitstream for ' + unitname + ' ...')
         returned_value = subprocess.run(cmd, shell=True)
         if returned_value.returncode != 0:
@@ -166,7 +174,7 @@ class ArgParser:
 
 
     def _flash_fpga(self, filepath, unitname):
-        cmd = "./fpga-toolchain/bin/iceprog " + filepath + "/" + unitname + ".bin"
+        cmd = "./dist/fpga-toolchain/bin/iceprog " + filepath + "/" + unitname + ".bin"
         print('Flashing ' + unitname + ' to FPGA ...')
         returned_value = subprocess.run(cmd, shell=True)
         if returned_value.returncode != 0:
