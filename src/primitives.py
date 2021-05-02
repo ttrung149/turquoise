@@ -15,44 +15,54 @@ from pyVHDLParser.Token import StartOfDocumentToken, EndOfDocumentToken, \
                                SpaceToken, LinebreakToken, CommentToken, \
                                IndentationToken
 from Error import Error, Warning
+from enum import Enum
+
+
+class PrimEnum(Enum):
+    STD_LOGIC = -1
+    BIT = -2
 
 
 # -----------------------------------------------------------------------------
 # STD_LOGIC
 # -----------------------------------------------------------------------------
-class STD_LOGIC:
+class STD_LOGIC(tuple):
     """ Represent a STD_LOGIC type """
-    def __init__(self, val=None):
-        self.val = val
+    __slots__ = []
+    def __new__(cls):
+        return tuple.__new__(cls, (PrimEnum.STD_LOGIC, 0))
 
     def __str__(self):
         return 'std_logic'
 
 
 # -----------------------------------------------------------------------------
-# STD_LOGIC_VECTOR
+# BIT
 # -----------------------------------------------------------------------------
-class STD_LOGIC_VECTOR:
-    """ Represent a STD_LOGIC_VECTOR type """
-    def __init__(self, start, end, val=None):
-        self.start = start
-        self.end = end
-        self.val = val
-
-    def __hash__(self):
-        return hash(self.start + ' ' + self.end)
+class BIT(tuple):
+    """ Represent a BIT type """
+    __slots__ = []
+    def __new__(cls):
+        return tuple.__new__(cls, (PrimEnum.BIT, 0))
 
     def __str__(self):
-        return 'STD_LOGIC_VECTOR({} to {})'.format(self.start, self.end)
+        return 'bit'
 
-    def __eq__(self, other):
-        return hasattr(other, 'start') and self.start == other.start and \
-               hasattr(other, 'end') and self.end == other.end and \
-               hasattr(other, 'val') and self.val == other.val
 
-    def is_same_type(self, other):
-        return hasattr(other, 'start') and self.start == other.start and \
-               hasattr(other, 'end') and self.end == other.end
+# -----------------------------------------------------------------------------
+# STD_LOGIC_VECTOR
+# -----------------------------------------------------------------------------
+class STD_LOGIC_VECTOR(tuple):
+    """ Represent a STD_LOGIC_VECTOR type """
+    __slots__ = []
+    def __new__(cls, start, end):
+        return tuple.__new__(cls, (start, end))
+
+    def __str__(self):
+        return 'STD_LOGIC_VECTOR({} to {})'.format(
+            tuple.__getitem__(self, 0),
+            tuple.__getitem__(self, 1)
+        )
 
 
 class StdLogicVectorStateEnum(Enum):
