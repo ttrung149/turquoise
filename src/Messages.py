@@ -3,9 +3,9 @@
 #  Turquoise - VHDL linter and compilation toolchain
 #  Copyright (c) 2020-2021: Turquoise team
 #
-#  File name: Error.py
+#  File name: Messages.py
 #
-#  Description: Implementation of Error class and Warning class
+#  Description: Implementation of Error class, Warning class, Info class
 #
 # -----------------------------------------------------------------------------
 
@@ -44,5 +44,18 @@ class Warning:
 
     def __repr__(self):
         color = fg('light_yellow')
+        reset = attr('reset')
+        return (color + self._message + reset)
+
+class Info:
+    """
+    Info constructor that contains the line number, filename, and a specific
+    Info message
+    """
+    def __init__(self, info_message):
+        self._message = "INFO: " + info_message
+
+    def __repr__(self):
+        color = fg('light_blue')
         reset = attr('reset')
         return (color + self._message + reset)

@@ -17,7 +17,7 @@ from pyVHDLParser.Token import StartOfDocumentToken, EndOfDocumentToken, \
                                SpaceToken, LinebreakToken, CommentToken, \
                                IndentationToken
 from pyVHDLParser.Base import ParserException
-from Error import Error, Warning
+from Messages import Error, Warning, Info
 from Logger import Logger
 
 # TODO: delete sys
@@ -105,6 +105,9 @@ def parse_entity(_token_iter, _logger, _filename):
             if curr_generic_sig_type is None:
                 err = Error(name.Start, _filename, 'Invalid syntax for STD_LOGIC_VECTOR')
                 _logger.add_log(err)
+
+                info = Info('hint - STD_LOGIC_VECTOR(3 downto 0) or STD_LOGIC_VECTOR(0 to 3)')
+                _logger.add_log(info)
         else:
             warn = Warning(name.Start, _filename,
                            'Type "' + name.Value.lower() + '" is not supported in generic linting')
@@ -144,6 +147,9 @@ def parse_entity(_token_iter, _logger, _filename):
             if curr_sig_type is None:
                 err = Error(name.Start, _filename, 'Invalid syntax for STD_LOGIC_VECTOR')
                 _logger.add_log(err)
+
+                info = Info('hint - STD_LOGIC_VECTOR(3 downto 0) or STD_LOGIC_VECTOR(0 to 3)')
+                _logger.add_log(info)
 
         else:
             warn = Warning(name.Start, _filename,
