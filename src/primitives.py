@@ -9,13 +9,17 @@
 #
 # -----------------------------------------------------------------------------
 
-from state import DFA, State
+from State import DFA, State
 from enum import Enum
 from pyVHDLParser.Token import StartOfDocumentToken, EndOfDocumentToken, \
                                SpaceToken, LinebreakToken, CommentToken, \
                                IndentationToken
+from Error import Error, Warning
 
 
+# -----------------------------------------------------------------------------
+# STD_LOGIC
+# -----------------------------------------------------------------------------
 class STD_LOGIC:
     """ Represent a STD_LOGIC type """
     def __init__(self, val=None):
@@ -25,12 +29,18 @@ class STD_LOGIC:
         return 'std_logic'
 
 
+# -----------------------------------------------------------------------------
+# STD_LOGIC_VECTOR
+# -----------------------------------------------------------------------------
 class STD_LOGIC_VECTOR:
     """ Represent a STD_LOGIC_VECTOR type """
     def __init__(self, start, end, val=None):
         self.start = start
         self.end = end
         self.val = val
+
+    def __hash__(self):
+        return hash(self.start + ' ' + self.end)
 
     def __str__(self):
         return 'STD_LOGIC_VECTOR({} to {})'.format(self.start, self.end)
@@ -46,8 +56,7 @@ class STD_LOGIC_VECTOR:
 
 
 class StdLogicVectorStateEnum(Enum):
-    START = State(0)
-    VECTOR = State(1)
+    START = State(1)
     OPEN_BRACK = State(2)
     FIRST = State(3)
     TO = State(4)
@@ -55,7 +64,7 @@ class StdLogicVectorStateEnum(Enum):
     SUCCESS = State(6)
 
 
-def _parse_std_logic_vector(_token_iter):
+def parse_std_logic_vector(_token_iter, _logger, _filename):
     parsed = None
     first = ''
     second = ''
@@ -64,34 +73,46 @@ def _parse_std_logic_vector(_token_iter):
     # DFA callbacks
     def _set_first(name):
         nonlocal first
-        first = name
+        first = name.Value.lower()
 
     def _set_second(name):
         nonlocal second
-        second = name
+        second = name.Value.lower()
 
     def _set_to_or_downto(name):
         nonlocal to_or_downto
-        to_or_downto = name
+        to_or_downto = name.Value.lower()
 
-    def _set_parsed(_):
+    def _set_parsed(name):
         nonlocal parsed, first, second, to_or_downto
 
         if to_or_downto == 'to':
             parsed = STD_LOGIC_VECTOR(first, second)
+            if int(first) >= int(second):
+                warn = Warning(name.Start, _filename,
+                               'Expecting first value to be smaller than ' +
+                               'second value in "to" declaration for STD_LOGIC_VECTOR')
+                _logger.add_log(warn)
+
         elif to_or_downto == 'downto':
             parsed = STD_LOGIC_VECTOR(second, first)
+            if int(first) <= int(second):
+                warn = Warning(name.Start, _filename,
+                               'Expecting first value to be smaller than ' +
+                               'second value in "downto" declaration for STD_LOGIC_VECTOR')
+                _logger.add_log(warn)
         else:
-            # TODO Add to logger
-            pass
+            err = Error(name.Start, _filename,
+                        'Expecting "to" or "downto" decl for STD_LOGIC_VECTOR')
+            _logger.add_log(err)
 
+    # =========================================================================
+    # Build parse_std_logic_vector DFA
+    # =========================================================================
     dfa = DFA('parse_std_logic_vector', StdLogicVectorStateEnum.START,
               [StdLogicVectorStateEnum.SUCCESS])
 
     dfa.add_transition(StdLogicVectorStateEnum.START,
-                       StdLogicVectorStateEnum.VECTOR, 'std_logic_vector')
-
-    dfa.add_transition(StdLogicVectorStateEnum.VECTOR,
                        StdLogicVectorStateEnum.OPEN_BRACK, '(')
     dfa.add_transition(StdLogicVectorStateEnum.OPEN_BRACK,
                        StdLogicVectorStateEnum.FIRST, '_*_', _set_first)
@@ -103,6 +124,9 @@ def _parse_std_logic_vector(_token_iter):
     dfa.add_transition(StdLogicVectorStateEnum.SECOND,
                        StdLogicVectorStateEnum.SUCCESS, ')', _set_parsed)
 
+    # =========================================================================
+    # Token stream iteration
+    # =========================================================================
     while not dfa.is_finished:
         try:
             token = next(_token_iter)
@@ -112,16 +136,14 @@ def _parse_std_logic_vector(_token_iter):
                 pass
 
             else:
-                dfa.step(token.Value.lower())
-
-        # Add logging
+                dfa.step(token)
 
         except StopIteration as ex:
-            # TODO: Logging
-            print(ex)
+            err = Error(token.Start, _filename, ex)
+            _logger.add_log(err)
             break
 
-    print(parsed)
+    if not dfa.is_finished_successfully:
+        return None
 
-    dfa.reset()
-
+    return parsed

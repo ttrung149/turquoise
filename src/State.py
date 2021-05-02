@@ -51,16 +51,17 @@ class DFA:
         self._is_finished = False
         self._success = False
 
-    def step(self, _input: str) -> None:
+    def step(self, _input_token) -> None:
         print("current state is {}".format(self._curr_state))
 
+        _input = _input_token.Value.lower()
         _from = self._curr_state
         if _input in self._transitions[_from]:
             next_state = self._transitions[_from][_input]
             self._curr_state = next_state
 
             if self._callbacks[_from][_input] is not None:
-                self._callbacks[_from][_input](_input)
+                self._callbacks[_from][_input](_input_token)
 
             if self._curr_state not in self._transitions:
                 self._is_finished = True
@@ -71,7 +72,7 @@ class DFA:
             self._curr_state = next_state
 
             if self._callbacks[_from]['_*_'] is not None:
-                self._callbacks[_from]['_*_'](_input)
+                self._callbacks[_from]['_*_'](_input_token)
 
             if self._curr_state not in self._transitions:
                 self._is_finished = True
