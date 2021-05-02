@@ -3,12 +3,11 @@
 #  Turquoise - VHDL linter and compilation toolchain
 #  Copyright (c) 2020-2021: Turquoise team
 #
-#  File name: primitives.py
+#  File name: Prims.py
 #
 #  Description: Implementation of DFAs that parse through primitive VHDL types
 #
 # -----------------------------------------------------------------------------
-
 from State import DFA, State
 from enum import Enum
 from pyVHDLParser.Token import StartOfDocumentToken, EndOfDocumentToken, \
@@ -16,11 +15,12 @@ from pyVHDLParser.Token import StartOfDocumentToken, EndOfDocumentToken, \
                                IndentationToken
 from Error import Error, Warning
 from enum import Enum
-
+from pyVHDLParser.Base import ParserException
 
 class PrimEnum(Enum):
     STD_LOGIC = -1
     BIT = -2
+    STD_LOGIC_VECTOR = -3
 
 
 # -----------------------------------------------------------------------------
@@ -56,7 +56,7 @@ class STD_LOGIC_VECTOR(tuple):
     """ Represent a STD_LOGIC_VECTOR type """
     __slots__ = []
     def __new__(cls, start, end):
-        return tuple.__new__(cls, (start, end))
+        return tuple.__new__(cls, (PrimEnum.STD_LOGIC_VECTOR, start, end))
 
     def __str__(self):
         return 'STD_LOGIC_VECTOR({} to {})'.format(
@@ -148,8 +148,8 @@ def parse_std_logic_vector(_token_iter, _logger, _filename):
             else:
                 dfa.step(token)
 
-        except StopIteration as ex:
-            err = Error(token.Start, _filename, ex)
+        except ParserException as ex:
+            err = Error(token.Start, _filename, str(ex))
             _logger.add_log(err)
             break
 
