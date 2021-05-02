@@ -1,31 +1,40 @@
-from Error import Error, Warning
-from colored import fg, bg, attr
+#!/usr/bin/env python
+# -----------------------------------------------------------------------------
+#  Turquoise - VHDL linter and compilation toolchain
+#  Copyright (c) 2020-2021: Turquoise team
+#
+#  File name: Logger.py
+#
+#  Description: Implementation of Logger class
+#
+# -----------------------------------------------------------------------------
 import sys
+import datetime
+
 
 class Logger:
-    
-    #Constructor
-    def __init__(self, logs=[], filename="log.txt"):
-        self.logs = logs
-        self.filename = filename
+    """ Represent the error logging class """
+
+    def __init__(self, init_logs=[], filename="turquoise.log"):
+        self._logs = init_logs
+        self._filename = filename
 
     def get_logs(self):
-        return self.logs
+        return self._logs
 
-    #Add a new log to the logger
     def add_log(self, log):
-        self.logs.append(log)
+        curr_time = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+        self._logs.append((curr_time, log))
 
-    #Pretty print the logs to the file
     def print_logs_to_file(self):
-        original_stdout = sys.stdout
-        with open(self.filename, 'w') as f:
-            sys.stdout = f
-            for x in self.logs:
-                print(x.message)
-            sys.stdout = original_stdout
+        orig_stdout = sys.stdout
 
-    #Pretty print the logs to terminal
+        with open(self._filename, 'w') as f:
+            sys.stdout = f
+            for (time, log) in self._logs:
+                print('{}: {}'.format(time, log._message))
+            sys.stdout = orig_stdout
+
     def print_logs_to_terminal(self):
-        for x in self.logs:
-            print(x)
+        for (time, log) in self._logs:
+            print('{}: {}'.format(time, log))

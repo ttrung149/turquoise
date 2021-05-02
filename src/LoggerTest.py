@@ -6,7 +6,7 @@ e2 = Error(5, "input.txt", "Generic error")
 w1 = Warning(5, "input.txt")
 w2 = Warning(5, "input.txt", "Generic warning")
 
-logs = [e1, w1]
+logs = []
 logger1 = Logger(logs)
 logger1.add_log(e2)
 logger1.add_log(w2)
