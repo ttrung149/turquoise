@@ -28,7 +28,8 @@ class App:
         )
 
         g = self._parser.add_mutually_exclusive_group()
-        g.add_argument("-a", "--analyze", metavar='path', help="analyze VHDL file(s)")
+        g.add_argument("-a", "--analyze", metavar='path',
+                       help="syntax check VHDL file(s) using GHDL front-end")
         g.add_argument("-c", "--compile", metavar='path', help="compile VHDL file(s)")
         g.add_argument("-l", "--lint", metavar='path', help="lint VHDL file(s)")
         g.add_argument("-w", "--wave", nargs=2, metavar=('path', 'unit'),
@@ -185,6 +186,13 @@ class App:
             if returned_value.returncode != 0:
                 pp('error', 'Fail to delete file "' + f + '"')
                 exit(1)
+
+        pp('info', 'Running ghdl --clean ...')
+        cmd = "./dist/fpga-toolchain/bin/ghdl --clean"
+        returned_value = subprocess.run(cmd, shell=True)
+        if returned_value.returncode != 0:
+            pp('error', 'Fail to run ghdl --clean')
+            exit(1)
 
         pp('success', 'Current project is successfully cleaned')
 

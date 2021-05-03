@@ -59,14 +59,14 @@ For more examples of the linter capabilities, please refer to the `examples` fol
 The following options are available with the Turquoise VHDL Linter + Compilation Toolchain:
 
 ```
-usage: . [-h] [-a path | -c path | -l path | -w path unit | -u path unit]
+usage: . [-h] [-a path | -c path | -l path | -w path unit | -u path unit | -x]
 
 Turquoise: VHDL Linter + Compilation Toolchain
 
 optional arguments:
   -h, --help            show this help message and exit
   -a path, --analyze path
-                        analyze VHDL file(s)
+                        syntax check VHDL file(s) using GHDL front-end
   -c path, --compile path
                         compile VHDL file(s)
   -l path, --lint path  lint VHDL file(s)
@@ -74,6 +74,7 @@ optional arguments:
                         generate waveform of VHDL unit
   -u path unit, --upload path unit
                         upload VHDL unit to board
+  -x, --clean           clean compiled binaries and waveforms
 ```
 
 ## Authors
