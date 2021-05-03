@@ -9,7 +9,7 @@ entity test_out_of_range is
 	);
 end test_out_of_range;
 
-component test_out_of_range is
+component test_out_of_range
 	port(
 		SIG1 : out std_logic_vector(23 to 1);    -- out of range std_logic_vector
 		SIG2 : out std_logic_vector(0 downto 1); -- out of range std_logic_vector

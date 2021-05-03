@@ -18,7 +18,7 @@ entity test_generic is
 	);
 end test_generic;
 
-component test_generic is
+component test_generic
     generic (
         SIG1 : std_logic_vector(23 to 1);        -- out of range std_logic_vector
 		SIG2 : std_logic_vector(0 downto 1);     -- out of range std_logic_vector
