@@ -64,18 +64,19 @@ class EntityStateEnum(Enum):
     SUCCESS = State(25)
 
 
-def parse_entity(_token_iter, _logger, _filename):
+def parse_entity_component(_token_iter, _logger, _filename):
     """
-    @brief Helper function. Parse entity object
+    @brief Helper function. Parse entity/component object
     @param _token_iter Token Iteration
     @param _logger Logger instance
     @param _filename Current file name that is being linted
-    @return Tuple of parsed generic (if any), and parsed entity (in that order)
+    @return Tuple of parsed generic (if any), and parsed port (in that order)
     """
     parsed_generic = OrderedDict()
     parsed_port = OrderedDict()
 
     # Ports state
+    is_component = False
     curr_sigs = []
     curr_sig_type = None
     curr_sig_in_out = ''
@@ -84,6 +85,10 @@ def parse_entity(_token_iter, _logger, _filename):
     # Generics state
     curr_generic_sig = ''
     curr_generic_sig_type = None
+
+    def _set_is_component(name):
+        nonlocal is_component
+        is_component = (name.Value.lower() == 'component')
 
     # =========================================================================
     # DFA generic callbacks
@@ -116,7 +121,7 @@ def parse_entity(_token_iter, _logger, _filename):
                 _logger.add_log(info)
             else:
                 curr_generic_sig_type = STD_LOGIC_VECTOR(first, second)
-        
+
         elif name.Value.lower() == 'signed':
             first, second = parse_to_downto(_token_iter, _logger, _filename)
 
@@ -129,7 +134,7 @@ def parse_entity(_token_iter, _logger, _filename):
                 _logger.add_log(info)
             else:
                 curr_generic_sig_type = SIGNED(first, second)
-        
+
         elif name.Value.lower() == 'unsigned':
             first, second = parse_to_downto(_token_iter, _logger, _filename)
 
@@ -193,7 +198,7 @@ def parse_entity(_token_iter, _logger, _filename):
                 _logger.add_log(info)
             else:
                 curr_sig_type = STD_LOGIC_VECTOR(first, second)
-        
+
         elif name.Value.lower() == 'signed':
             first, second = parse_to_downto(_token_iter, _logger, _filename)
 
@@ -206,7 +211,7 @@ def parse_entity(_token_iter, _logger, _filename):
                 _logger.add_log(info)
             else:
                 curr_sig_type = SIGNED(first, second)
-        
+
         elif name.Value.lower() == 'unsigned':
             first, second = parse_to_downto(_token_iter, _logger, _filename)
 
@@ -250,14 +255,21 @@ def parse_entity(_token_iter, _logger, _filename):
         curr_sig_in_out = ''
 
     def _check_entity_name(name):
-        nonlocal curr_entity_name
-        if name.Value.lower() != curr_entity_name:
+        nonlocal curr_entity_name, is_component
+        if not is_component and name.Value.lower() != curr_entity_name:
             err = Error(name.Start, _filename,
                         'Expecting entity "' + curr_entity_name + '", got: ' +
-                        '"' + name.Value.lower())
+                        '"' + name.Value.lower() + '"')
+            _logger.add_log(err)
+
+        elif is_component and name.Value.lower() != 'component':
+            err = Error(name.Start, _filename,
+                        'Expecting "component" at end of component declaration, got: ' +
+                        '"' + name.Value.lower() + '"')
             _logger.add_log(err)
 
         curr_entity_name = ''
+        is_component = False
 
     # =========================================================================
     # Build parse_entity DFA
@@ -265,7 +277,10 @@ def parse_entity(_token_iter, _logger, _filename):
     dfa = DFA('parse_entity', EntityStateEnum.START, [EntityStateEnum.SUCCESS])
 
     # Parse entity starting syntax
-    dfa.add_transition(EntityStateEnum.START, EntityStateEnum.ENTITY, 'entity')
+    dfa.add_transition(EntityStateEnum.START,
+                       EntityStateEnum.ENTITY, 'entity', _set_is_component)
+    dfa.add_transition(EntityStateEnum.START,
+                       EntityStateEnum.ENTITY, 'component', _set_is_component)
     dfa.add_transition(EntityStateEnum.ENTITY, EntityStateEnum.NAME, '_*_',
                        _set_curr_entity_name)
     dfa.add_transition(EntityStateEnum.NAME, EntityStateEnum.IS, 'is')
@@ -391,10 +406,10 @@ def parse_entity(_token_iter, _logger, _filename):
 
         return None
 
-    return (parsed_generic, parsed_port)
+    return (is_component, parsed_generic, parsed_port)
 
 
-a = parse_entity(token_iter, logger, 'a.txt')
+a = parse_entity_component(token_iter, logger, 'a.txt')
 print(a)
 
 logger.print_logs_to_terminal()
