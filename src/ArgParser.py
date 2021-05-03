@@ -17,15 +17,17 @@ from glob import glob
 
 from .Tokenize import Tokenize
 from .Linter import Linter
+from .Messages import pp
 
-class ArgParser:
+class App:
 
-    def __init__(self):
-        self.parser = argparse.ArgumentParser(
+    def __init__(self, _logger):
+        self._logger = _logger
+        self._parser = argparse.ArgumentParser(
             description='Turquoise: VHDL Linter + Compilation Toolchain'
         )
 
-        g = self.parser.add_mutually_exclusive_group()
+        g = self._parser.add_mutually_exclusive_group()
         g.add_argument("-a", "--analyze", metavar='path', help="analyze VHDL file(s)")
         g.add_argument("-c", "--compile", metavar='path', help="compile VHDL file(s)")
         g.add_argument("-l", "--lint", metavar='path', help="lint VHDL file(s)")
@@ -34,7 +36,7 @@ class ArgParser:
         g.add_argument("-u", "--upload", nargs=2, metavar=('path', 'unit'),
                        help="upload VHDL unit to board")
 
-        args = self.parser.parse_args()
+        args = self._parser.parse_args()
 
         if args.analyze:
             self._analyze_file_dir(args.analyze)
@@ -49,7 +51,7 @@ class ArgParser:
                 for f in files:
                     self._compile_file(f)
             else:
-                print('Invalid file/dir path.')
+                pp('error', 'Invalid file/dir path.')
 
         # Analyze, elaborate, run required files, and simulate unit on gtkwave
         elif args.wave:
@@ -63,24 +65,23 @@ class ArgParser:
 
         # Lint file/dir of files
         elif args.lint:
+            pp('info', 'Running "turquoise" linter ...')
             if os.path.isfile(args.lint):
-                self._lint_file(args.lint)
+                self._lint_files([args.lint])
             elif os.path.isdir(args.lint):
                 files = [y for x in os.walk(args.lint)
                            for y in glob(os.path.join(x[0], '*.vhd[l]'))]
-                for f in files:
-                    self._lint_file(f)
+                self._lint_files(files)
             else:
-                print('Invalid file/dir path.')
+                pp('error', 'Failed to lint - Invalid file/dir path.')
 
 
     def _analyze_file(self, filename):
         cmd = "./dist/fpga-toolchain/bin/ghdl -a " + "\'" + filename + "\'"
-        print('Analyzing file ' + filename + ' ...')
+        pp('info', 'Analyzing file ' + filename + ' ...')
         returned_value = subprocess.run(cmd, shell=True)
         if returned_value.returncode == 0:
-            print('Finished analyzing successfully!')
-        print()
+            pp('success', 'Finished analyzing successfully!')
 
 
     def _analyze_file_dir(self, path):
@@ -92,43 +93,43 @@ class ArgParser:
             for f in files:
                 self._analyze_file(f)
         else:
-            print('Invalid file/dir path.')
+            pp('error', 'Failed to analyze file directory - Invalid file/dir path.')
 
 
     def _compile_file(self, filename):
         cmd = "./dist/fpga-toolchain/bin/ghdl -c " + "\'" + filename + "\'"
-        print('Compiling file ' + filename + ' ...')
+        pp('info', 'Compiling file ' + filename + ' ...')
         returned_value = subprocess.run(cmd, shell=True)
         if returned_value.returncode == 0:
-            print('Finished compiling successfully!')
-        print()
+            pp('success', 'Finished compiling successfully!')
 
 
     def _elaborate_unit(self, unitname):
         cmd = "./dist/fpga-toolchain/bin/ghdl -e " + unitname
-        print('Elaborating unit ' + unitname + ' ...')
+
+        pp('info', 'Elaborating unit ' + unitname + ' ...')
         returned_value = subprocess.run(cmd, shell=True)
         if returned_value.returncode != 0:
             exit(1)
-        print('Finished elaborating successfully!\n')
+        pp('success', 'Finished elaborating successfully!')
 
 
     def _elaborate_run_unit(self, unitname):
         cmd = "./dist/fpga-toolchain/bin/ghdl -r " + unitname + " --vcd=" + unitname + ".vcd"
-        print('Running unit ' + unitname + ' ...')
+        pp('info', 'Running unit ' + unitname + ' ...')
         returned_value = subprocess.run(cmd, shell=True)
         if returned_value.returncode != 0:
             exit(1)
-        print('Finished elaborating and running successfully!\n')
+        pp('success', 'Finished elaborating and running successfully!')
 
 
     def _run_gtkwave(self, filename):
         cmd = "./dist/gtkwave/Contents/MacOS/gtkwave -o " + filename
-        print('Opening ' + filename + ' in gtkwave ...')
+        pp('info', 'Opening ' + filename + ' in gtkwave ...')
         returned_value = subprocess.run(cmd, shell=True)
         if returned_value.returncode != 0:
             exit(1)
-        print('Closing gtkwave!\n')
+        pp('info', 'Closing gtkwave!')
 
 
     def _run_file(self, unitname):
@@ -143,7 +144,7 @@ class ArgParser:
         returned_value = subprocess.run(cmd, shell=True)
         if returned_value.returncode != 0:
             exit(1)
-        print('Set GHDL export path successfully!\n')
+        pp('info', 'Set GHDL export path successfully!')
 
 
     def _synthesize_unit(self, filepath, unitname):
@@ -156,11 +157,11 @@ class ArgParser:
                 cmd = cmd + f + " "
         cmd = cmd  + "-e " + unitname + "; synth_ice40 -json " + filepath + "/" + unitname + ".json\'"
 
-        print('Synthesizing ' + unitname + ' ...')
+        pp('info', 'Synthesizing ' + unitname + ' ...')
         returned_value = subprocess.run(cmd, shell=True)
         if returned_value.returncode != 0:
             exit(1)
-        print('Finished synthesizing successfully!\n')
+        pp('success', 'Finished synthesizing successfully!')
 
 
     def _route_unit(self, filepath, unitname):
@@ -168,31 +169,31 @@ class ArgParser:
               filepath + "/" + unitname + \
               ".pcf --asc " + filepath + "/" + unitname + ".asc --json " + filepath + \
               "/" + unitname + ".json --top " + unitname
-        print('Routing ' + unitname + ' ...')
+        pp('info', 'Routing ' + unitname + ' ...')
         returned_value = subprocess.run(cmd, shell=True)
         if returned_value.returncode != 0:
             exit(1)
-        print(returned_value)
-        print('Finished routing successfully!\n')
+        pp('info', returned_value)
+        pp('success', 'Finished routing successfully!')
 
 
     def _generate_bitstream(self, filepath, unitname):
         cmd = "./dist/fpga-toolchain/bin/icepack " + filepath + "/" + \
                unitname + ".asc " + filepath + "/" + unitname + ".bin"
-        print('Generating bitstream for ' + unitname + ' ...')
+        pp('info', 'Generating bitstream for ' + unitname + ' ...')
         returned_value = subprocess.run(cmd, shell=True)
         if returned_value.returncode != 0:
             exit(1)
-        print('Finished generating bitstream successfully!\n')
+        pp('success', 'Finished generating bitstream successfully!')
 
 
     def _flash_fpga(self, filepath, unitname):
         cmd = "./dist/fpga-toolchain/bin/iceprog " + filepath + "/" + unitname + ".bin"
-        print('Flashing ' + unitname + ' to FPGA ...')
+        pp('info', 'Flashing ' + unitname + ' to FPGA ...')
         returned_value = subprocess.run(cmd, shell=True)
         if returned_value.returncode != 0:
             exit(1)
-        print('Finished flashing successfully!\n')
+        pp('success', 'Finished flashing successfully!')
 
 
     def _upload_file(self, filepath, unitname):
@@ -203,12 +204,7 @@ class ArgParser:
         self._flash_fpga(filepath, unitname)
 
 
-    def _lint_file(self, filename):
-        print('Linting ' + filename + ' ...')
-        linter = Linter(filename)
+    def _lint_files(self, _filenames):
+        linter = Linter(_filenames, self._logger)
         linter.lint()
-        logger = linter.get_logger()
-        logger.print_logs_to_terminal()
-        if len(logger.get_logs()) == 0:
-            print('Finished linting successfully!')
-        print()
+        logger = linter.print_status()

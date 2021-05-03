@@ -6,10 +6,12 @@
 #  File name: __main__.py
 #
 #  Description: Main driver for the turquoise VDHL linter + compilation
-#  toolchain. Refer to README.md for specific usage
+#  toolchain. Refer to README.md for specific usage.
 #
 # -----------------------------------------------------------------------------
-from src.ArgParser import ArgParser
+from src.ArgParser import App
+from src.Logger import Logger
 
 if __name__ == '__main__':
-    ArgParser()
+    _logger = Logger()
+    App(_logger)

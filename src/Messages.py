@@ -59,3 +59,19 @@ class Info:
         color = fg('light_blue')
         reset = attr('reset')
         return (color + self._message + reset)
+
+def pp(_status, _message):
+    """
+    Pretty print. Status accepted: success, warning, error, info
+    """
+    reset = attr('reset')
+    if _status == 'success':
+        print(fg('light_green') + _message + reset + '\n')
+    elif _status == 'warning':
+        print(fg('light_yellow') + _message + reset + '\n')
+    elif _status == 'error':
+        print(fg('light_red') + 'ERR: ' + _message + reset + '\n')
+    elif _status == 'info':
+        print('INFO: ' + _message + '\n')
+    else:
+        print('\n')
