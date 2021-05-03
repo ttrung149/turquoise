@@ -8,14 +8,13 @@
 #  Description: Implementation of DFAs that parse through primitive VHDL types
 #
 # -----------------------------------------------------------------------------
-from State import DFA, State
-from enum import Enum
 from pyVHDLParser.Token import StartOfDocumentToken, EndOfDocumentToken, \
                                SpaceToken, LinebreakToken, CommentToken, \
                                IndentationToken
-from Messages import Error, Warning
-from enum import Enum
 from pyVHDLParser.Base import ParserException
+from enum import Enum
+from .State import DFA, State
+from .Messages import Error, Warning
 
 
 class PrimEnum(Enum):
@@ -27,6 +26,7 @@ class PrimEnum(Enum):
     INTEGER = -6
     BOOLEAN = -7
     TIME = -8
+    STRING = -9
 
 
 class STD_LOGIC(tuple):
@@ -116,6 +116,16 @@ class TIME(tuple):
 
     def __str__(self):
         return 'time'
+
+
+class STRING(tuple):
+    """ Represent a STRING type """
+    __slots__ = []
+    def __new__(cls):
+        return tuple.__new__(cls, (PrimEnum.STRING, 0))
+
+    def __str__(self):
+        return 'string'
 
 
 class ToDownToStateEnum(Enum):

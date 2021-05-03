@@ -8,27 +8,20 @@
 #  Description: Implementation of DFAs that parse through entity syntax
 #
 # -----------------------------------------------------------------------------
-from State import DFA, State
-from Tokenize import Tokenize
-from Prims import STD_LOGIC, STD_LOGIC_VECTOR, BIT, SIGNED, UNSIGNED, \
-                  INTEGER, BOOLEAN, TIME, \
-                  parse_to_downto
 from pyVHDLParser.Token import StartOfDocumentToken, EndOfDocumentToken, \
                                SpaceToken, LinebreakToken, CommentToken, \
                                IndentationToken
 from pyVHDLParser.Base import ParserException
-from Messages import Error, Warning, Info
-from Logger import Logger
-
-# TODO: delete sys
-import sys
 from enum import Enum
 from collections import OrderedDict
 
-logger = Logger()
-filename = sys.argv[1]
-tokenize = Tokenize(filename)
-token_iter = tokenize.get_token_iter()
+from .State import DFA, State
+from .Tokenize import Tokenize
+from .Prims import STD_LOGIC, STD_LOGIC_VECTOR, BIT, SIGNED, UNSIGNED, \
+                   INTEGER, BOOLEAN, TIME, STRING, \
+                   parse_to_downto
+from .Messages import Error, Warning, Info
+from .Logger import Logger
 
 
 class EntityStateEnum(Enum):
@@ -109,6 +102,8 @@ def parse_entity_component(_token_iter, _logger, _filename):
             curr_generic_sig_type = BOOLEAN()
         elif name.Value.lower() == 'time':
             curr_generic_sig_type = TIME()
+        elif name.Value.lower() == 'string':
+            curr_generic_sig_type = STRING()
         elif name.Value.lower() == 'std_logic_vector':
             first, second = parse_to_downto(_token_iter, _logger, _filename)
 
@@ -186,6 +181,8 @@ def parse_entity_component(_token_iter, _logger, _filename):
             curr_sig_type = BOOLEAN()
         elif name.Value.lower() == 'time':
             curr_sig_type = TIME()
+        elif name.Value.lower() == 'string':
+            curr_sig_type = STRING()
         elif name.Value.lower() == 'std_logic_vector':
             first, second = parse_to_downto(_token_iter, _logger, _filename)
 
@@ -267,9 +264,6 @@ def parse_entity_component(_token_iter, _logger, _filename):
                         'Expecting "component" at end of component declaration, got: ' +
                         '"' + name.Value.lower() + '"')
             _logger.add_log(err)
-
-        curr_entity_name = ''
-        is_component = False
 
     # =========================================================================
     # Build parse_entity DFA
@@ -406,10 +400,4 @@ def parse_entity_component(_token_iter, _logger, _filename):
 
         return None
 
-    return (is_component, parsed_generic, parsed_port)
-
-
-a = parse_entity_component(token_iter, logger, 'a.txt')
-print(a)
-
-logger.print_logs_to_terminal()
+    return (curr_entity_name, parsed_generic, parsed_port)
