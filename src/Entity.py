@@ -10,9 +10,9 @@
 # -----------------------------------------------------------------------------
 from State import DFA, State
 from Tokenize import Tokenize
-from State import DFA, State
-from Prims import STD_LOGIC, STD_LOGIC_VECTOR, BIT, \
-                       parse_std_logic_vector
+from Prims import STD_LOGIC, STD_LOGIC_VECTOR, BIT, SIGNED, UNSIGNED, \
+                  INTEGER, BOOLEAN, TIME, \
+                  parse_to_downto
 from pyVHDLParser.Token import StartOfDocumentToken, EndOfDocumentToken, \
                                SpaceToken, LinebreakToken, CommentToken, \
                                IndentationToken
@@ -98,16 +98,51 @@ def parse_entity(_token_iter, _logger, _filename):
             curr_generic_sig_type = STD_LOGIC()
         elif name.Value.lower() == 'bit':
             curr_generic_sig_type = BIT()
+        elif name.Value.lower() == 'integer':
+            curr_generic_sig_type = INTEGER()
+        elif name.Value.lower() == 'boolean':
+            curr_generic_sig_type = BOOLEAN()
+        elif name.Value.lower() == 'time':
+            curr_generic_sig_type = TIME()
         elif name.Value.lower() == 'std_logic_vector':
-            curr_generic_sig_type = parse_std_logic_vector(_token_iter, _logger, _filename)
+            first, second = parse_to_downto(_token_iter, _logger, _filename)
 
             # Invalid STD_LOGIC_VECTOR parsing
-            if curr_generic_sig_type is None:
+            if first is None and second is None:
                 err = Error(name.Start, _filename, 'Invalid syntax for STD_LOGIC_VECTOR')
                 _logger.add_log(err)
 
                 info = Info('hint - STD_LOGIC_VECTOR(3 downto 0) or STD_LOGIC_VECTOR(0 to 3)')
                 _logger.add_log(info)
+            else:
+                curr_generic_sig_type = STD_LOGIC_VECTOR(first, second)
+        
+        elif name.Value.lower() == 'signed':
+            first, second = parse_to_downto(_token_iter, _logger, _filename)
+
+            # Invalid SIGNED parsing
+            if first is None and second is None:
+                err = Error(name.Start, _filename, 'Invalid syntax for SIGNED')
+                _logger.add_log(err)
+
+                info = Info('hint - SIGNED(3 downto 0) or SIGNED(0 to 3)')
+                _logger.add_log(info)
+            else:
+                curr_generic_sig_type = SIGNED(first, second)
+        
+        elif name.Value.lower() == 'unsigned':
+            first, second = parse_to_downto(_token_iter, _logger, _filename)
+
+            # Invalid UNSIGNED parsing
+            if first is None and second is None:
+                err = Error(name.Start, _filename, 'Invalid syntax for UNSIGNED')
+                _logger.add_log(err)
+
+                info = Info('hint - UNSIGNED(3 downto 0) or UNSIGNED(0 to 3)')
+                _logger.add_log(info)
+            else:
+                curr_generic_sig_type = UNSIGNED(first, second)
+
         else:
             warn = Warning(name.Start, _filename,
                            'Type "' + name.Value.lower() + '" is not supported in generic linting')
@@ -140,16 +175,50 @@ def parse_entity(_token_iter, _logger, _filename):
             curr_sig_type = STD_LOGIC()
         elif name.Value.lower() == 'bit':
             curr_sig_type = BIT()
+        elif name.Value.lower() == 'integer':
+            curr_sig_type = INTEGER()
+        elif name.Value.lower() == 'boolean':
+            curr_sig_type = BOOLEAN()
+        elif name.Value.lower() == 'time':
+            curr_sig_type = TIME()
         elif name.Value.lower() == 'std_logic_vector':
-            curr_sig_type = parse_std_logic_vector(_token_iter, _logger, _filename)
+            first, second = parse_to_downto(_token_iter, _logger, _filename)
 
             # Invalid STD_LOGIC_VECTOR parsing
-            if curr_sig_type is None:
+            if first is None and second is None:
                 err = Error(name.Start, _filename, 'Invalid syntax for STD_LOGIC_VECTOR')
                 _logger.add_log(err)
 
                 info = Info('hint - STD_LOGIC_VECTOR(3 downto 0) or STD_LOGIC_VECTOR(0 to 3)')
                 _logger.add_log(info)
+            else:
+                curr_sig_type = STD_LOGIC_VECTOR(first, second)
+        
+        elif name.Value.lower() == 'signed':
+            first, second = parse_to_downto(_token_iter, _logger, _filename)
+
+            # Invalid SIGNED parsing
+            if first is None and second is None:
+                err = Error(name.Start, _filename, 'Invalid syntax for SIGNED')
+                _logger.add_log(err)
+
+                info = Info('hint - SIGNED(3 downto 0) or SIGNED(0 to 3)')
+                _logger.add_log(info)
+            else:
+                curr_sig_type = SIGNED(first, second)
+        
+        elif name.Value.lower() == 'unsigned':
+            first, second = parse_to_downto(_token_iter, _logger, _filename)
+
+            # Invalid UNSIGNED parsing
+            if first is None and second is None:
+                err = Error(name.Start, _filename, 'Invalid syntax for UNSIGNED')
+                _logger.add_log(err)
+
+                info = Info('hint - UNSIGNED(3 downto 0) or UNSIGNED(0 to 3)')
+                _logger.add_log(info)
+            else:
+                curr_sig_type = UNSIGNED(first, second)
 
         else:
             warn = Warning(name.Start, _filename,
@@ -288,12 +357,36 @@ def parse_entity(_token_iter, _logger, _filename):
         if dfa.get_curr_state == EntityStateEnum.IS:
             err = Error(curr_token.Start, _filename,
                         'Expecting "port" or "generic", ' +
-                        'got "' + curr_token.Value.lower())
+                        'got "' + curr_token.Value.lower() + '"')
             _logger.add_log(err)
         elif dfa.get_curr_state == EntityStateEnum.SIGNAL_DONE:
             err = Error(curr_token.Start, _filename,
                         'Expecting "in", "out", "buffer", "inout" for signal type, ' +
-                        'got "' + curr_token.Value.lower())
+                        'got "' + curr_token.Value.lower() + '"')
+            _logger.add_log(err)
+
+        elif dfa.get_curr_state == EntityStateEnum.GENERIC_TYPE:
+            err = Error(curr_token.Start, _filename,
+                        'Invalid generic type declaration around token "' +
+                        curr_token.Value.lower() + '"')
+            _logger.add_log(err)
+
+            info = Info('hint - check syntax for declared generic type')
+            _logger.add_log(info)
+
+        elif dfa.get_curr_state == EntityStateEnum.SIGNAL_TYPE:
+            err = Error(curr_token.Start, _filename,
+                        'Invalid port type declaration around token "' +
+                        curr_token.Value.lower() + '"')
+            _logger.add_log(err)
+
+            info = Info('hint - check syntax for declared port type')
+            _logger.add_log(info)
+
+        else:
+            err = Error(curr_token.Start, _filename,
+                        'Invalid declaration around token "' +
+                        curr_token.Value.lower() + '"')
             _logger.add_log(err)
 
         return None

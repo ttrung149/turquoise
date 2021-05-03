@@ -13,19 +13,22 @@ from enum import Enum
 from pyVHDLParser.Token import StartOfDocumentToken, EndOfDocumentToken, \
                                SpaceToken, LinebreakToken, CommentToken, \
                                IndentationToken
-from Error import Error, Warning
+from Messages import Error, Warning
 from enum import Enum
 from pyVHDLParser.Base import ParserException
+
 
 class PrimEnum(Enum):
     STD_LOGIC = -1
     BIT = -2
     STD_LOGIC_VECTOR = -3
+    SIGNED = -4
+    UNSIGNED = -5
+    INTEGER = -6
+    BOOLEAN = -7
+    TIME = -8
 
 
-# -----------------------------------------------------------------------------
-# STD_LOGIC
-# -----------------------------------------------------------------------------
 class STD_LOGIC(tuple):
     """ Represent a STD_LOGIC type """
     __slots__ = []
@@ -36,9 +39,6 @@ class STD_LOGIC(tuple):
         return 'std_logic'
 
 
-# -----------------------------------------------------------------------------
-# BIT
-# -----------------------------------------------------------------------------
 class BIT(tuple):
     """ Represent a BIT type """
     __slots__ = []
@@ -49,9 +49,6 @@ class BIT(tuple):
         return 'bit'
 
 
-# -----------------------------------------------------------------------------
-# STD_LOGIC_VECTOR
-# -----------------------------------------------------------------------------
 class STD_LOGIC_VECTOR(tuple):
     """ Represent a STD_LOGIC_VECTOR type """
     __slots__ = []
@@ -65,7 +62,63 @@ class STD_LOGIC_VECTOR(tuple):
         )
 
 
-class StdLogicVectorStateEnum(Enum):
+class SIGNED(tuple):
+    """ Represent a SIGNED type """
+    __slots__ = []
+    def __new__(cls, start, end):
+        return tuple.__new__(cls, (PrimEnum.SIGNED, start, end))
+
+    def __str__(self):
+        return 'SIGNED({} to {})'.format(
+            tuple.__getitem__(self, 0),
+            tuple.__getitem__(self, 1)
+        )
+
+
+class UNSIGNED(tuple):
+    """ Represent a UNSIGNED type """
+    __slots__ = []
+    def __new__(cls, start, end):
+        return tuple.__new__(cls, (PrimEnum.UNSIGNED, start, end))
+
+    def __str__(self):
+        return 'UNSIGNED({} to {})'.format(
+            tuple.__getitem__(self, 0),
+            tuple.__getitem__(self, 1)
+        )
+
+
+class INTEGER(tuple):
+    """ Represent a INTEGER type """
+    __slots__ = []
+    def __new__(cls):
+        return tuple.__new__(cls, (PrimEnum.INTEGER, 0))
+
+    def __str__(self):
+        return 'integer'
+
+
+class BOOLEAN(tuple):
+    """ Represent a BOOLEAN type """
+    __slots__ = []
+    def __new__(cls):
+        return tuple.__new__(cls, (PrimEnum.BOOLEAN, 0))
+
+    def __str__(self):
+        return 'boolean'
+
+
+class TIME(tuple):
+    """ Represent a TIME type """
+    __slots__ = []
+    def __new__(cls):
+        return tuple.__new__(cls, (PrimEnum.TIME, 0))
+
+    def __str__(self):
+        return 'time'
+
+
+class ToDownToStateEnum(Enum):
     START = State(1)
     OPEN_BRACK = State(2)
     FIRST = State(3)
@@ -74,7 +127,7 @@ class StdLogicVectorStateEnum(Enum):
     SUCCESS = State(6)
 
 
-def parse_std_logic_vector(_token_iter, _logger, _filename):
+def parse_to_downto(_token_iter, _logger, _filename):
     parsed = None
     first = ''
     second = ''
@@ -97,7 +150,7 @@ def parse_std_logic_vector(_token_iter, _logger, _filename):
         nonlocal parsed, first, second, to_or_downto
 
         if to_or_downto == 'to':
-            parsed = STD_LOGIC_VECTOR(first, second)
+            parsed = (first, second)
             if int(first) >= int(second):
                 warn = Warning(name.Start, _filename,
                                'Expecting first value to be smaller than ' +
@@ -105,7 +158,7 @@ def parse_std_logic_vector(_token_iter, _logger, _filename):
                 _logger.add_log(warn)
 
         elif to_or_downto == 'downto':
-            parsed = STD_LOGIC_VECTOR(second, first)
+            parsed = (second, first)
             if int(first) <= int(second):
                 warn = Warning(name.Start, _filename,
                                'Expecting first value to be smaller than ' +
@@ -117,22 +170,22 @@ def parse_std_logic_vector(_token_iter, _logger, _filename):
             _logger.add_log(err)
 
     # =========================================================================
-    # Build parse_std_logic_vector DFA
+    # Build parse_to_downto DFA
     # =========================================================================
-    dfa = DFA('parse_std_logic_vector', StdLogicVectorStateEnum.START,
-              [StdLogicVectorStateEnum.SUCCESS])
+    dfa = DFA('parse_to_downto', ToDownToStateEnum.START,
+              [ToDownToStateEnum.SUCCESS])
 
-    dfa.add_transition(StdLogicVectorStateEnum.START,
-                       StdLogicVectorStateEnum.OPEN_BRACK, '(')
-    dfa.add_transition(StdLogicVectorStateEnum.OPEN_BRACK,
-                       StdLogicVectorStateEnum.FIRST, '_*_', _set_first)
-    dfa.add_transition(StdLogicVectorStateEnum.FIRST,
-                       StdLogicVectorStateEnum.TO, '_*_', _set_to_or_downto)
-    dfa.add_transition(StdLogicVectorStateEnum.TO,
-                       StdLogicVectorStateEnum.SECOND, '_*_', _set_second)
+    dfa.add_transition(ToDownToStateEnum.START,
+                       ToDownToStateEnum.OPEN_BRACK, '(')
+    dfa.add_transition(ToDownToStateEnum.OPEN_BRACK,
+                       ToDownToStateEnum.FIRST, '_*_', _set_first)
+    dfa.add_transition(ToDownToStateEnum.FIRST,
+                       ToDownToStateEnum.TO, '_*_', _set_to_or_downto)
+    dfa.add_transition(ToDownToStateEnum.TO,
+                       ToDownToStateEnum.SECOND, '_*_', _set_second)
 
-    dfa.add_transition(StdLogicVectorStateEnum.SECOND,
-                       StdLogicVectorStateEnum.SUCCESS, ')', _set_parsed)
+    dfa.add_transition(ToDownToStateEnum.SECOND,
+                       ToDownToStateEnum.SUCCESS, ')', _set_parsed)
 
     # =========================================================================
     # Token stream iteration
@@ -153,7 +206,12 @@ def parse_std_logic_vector(_token_iter, _logger, _filename):
             _logger.add_log(err)
             break
 
+        except ValueError as ex:
+            err = Error(token.Start, _filename, str(ex))
+            _logger.add_log(err)
+            break
+
     if not dfa.is_finished_successfully:
-        return None
+        return (None, None)
 
     return parsed
