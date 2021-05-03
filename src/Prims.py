@@ -36,7 +36,7 @@ class STD_LOGIC(tuple):
         return tuple.__new__(cls, (PrimEnum.STD_LOGIC, 0))
 
     def __str__(self):
-        return 'std_logic'
+        return 'STD_LOGIC'
 
 
 class BIT(tuple):
@@ -46,7 +46,7 @@ class BIT(tuple):
         return tuple.__new__(cls, (PrimEnum.BIT, 0))
 
     def __str__(self):
-        return 'bit'
+        return 'BIT'
 
 
 class STD_LOGIC_VECTOR(tuple):
@@ -57,8 +57,8 @@ class STD_LOGIC_VECTOR(tuple):
 
     def __str__(self):
         return 'STD_LOGIC_VECTOR({} to {})'.format(
-            tuple.__getitem__(self, 0),
-            tuple.__getitem__(self, 1)
+            tuple.__getitem__(self, 1),
+            tuple.__getitem__(self, 2)
         )
 
 
@@ -70,8 +70,8 @@ class SIGNED(tuple):
 
     def __str__(self):
         return 'SIGNED({} to {})'.format(
-            tuple.__getitem__(self, 0),
-            tuple.__getitem__(self, 1)
+            tuple.__getitem__(self, 1),
+            tuple.__getitem__(self, 2)
         )
 
 
@@ -83,8 +83,8 @@ class UNSIGNED(tuple):
 
     def __str__(self):
         return 'UNSIGNED({} to {})'.format(
-            tuple.__getitem__(self, 0),
-            tuple.__getitem__(self, 1)
+            tuple.__getitem__(self, 1),
+            tuple.__getitem__(self, 2)
         )
 
 
@@ -95,7 +95,7 @@ class INTEGER(tuple):
         return tuple.__new__(cls, (PrimEnum.INTEGER, 0))
 
     def __str__(self):
-        return 'integer'
+        return 'INTEGER'
 
 
 class BOOLEAN(tuple):
@@ -105,7 +105,7 @@ class BOOLEAN(tuple):
         return tuple.__new__(cls, (PrimEnum.BOOLEAN, 0))
 
     def __str__(self):
-        return 'boolean'
+        return 'BOOLEAN'
 
 
 class TIME(tuple):
@@ -115,7 +115,7 @@ class TIME(tuple):
         return tuple.__new__(cls, (PrimEnum.TIME, 0))
 
     def __str__(self):
-        return 'time'
+        return 'TIME'
 
 
 class STRING(tuple):
@@ -125,7 +125,7 @@ class STRING(tuple):
         return tuple.__new__(cls, (PrimEnum.STRING, 0))
 
     def __str__(self):
-        return 'string'
+        return 'STRING'
 
 
 class ToDownToStateEnum(Enum):
@@ -164,7 +164,7 @@ def parse_to_downto(_token_iter, _logger, _filename):
             if int(first) >= int(second):
                 warn = Warning(name.Start, _filename,
                                'Expecting first value to be smaller than ' +
-                               'second value in "to" declaration for STD_LOGIC_VECTOR')
+                               'second value in "to" declaration')
                 _logger.add_log(warn)
 
         elif to_or_downto == 'downto':
@@ -172,11 +172,11 @@ def parse_to_downto(_token_iter, _logger, _filename):
             if int(first) <= int(second):
                 warn = Warning(name.Start, _filename,
                                'Expecting first value to be smaller than ' +
-                               'second value in "downto" declaration for STD_LOGIC_VECTOR')
+                               'second value in "downto" declaration')
                 _logger.add_log(warn)
         else:
             err = Error(name.Start, _filename,
-                        'Expecting "to" or "downto" decl for STD_LOGIC_VECTOR')
+                        'Expecting "to" or "downto" declaration')
             _logger.add_log(err)
 
     # =========================================================================

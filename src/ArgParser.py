@@ -176,13 +176,11 @@ class App:
                        for y in glob(os.path.join(x[0], '*.vcd'))]
         fst_files = [y for x in os.walk('.')
                        for y in glob(os.path.join(x[0], '*.vcd.fst'))]
-        cf_files  = [y for x in os.walk('.')
-                       for y in glob(os.path.join(x[0], '*.cf'))]
 
-        files_to_be_deleted = vcd_files + fst_files + cf_files
+        files_to_be_deleted = vcd_files + fst_files
 
         for f in files_to_be_deleted:
-            cmd = "rm -rf " + f
+            cmd = "rm " + f
             returned_value = subprocess.run(cmd, shell=True)
             if returned_value.returncode != 0:
                 pp('error', 'Fail to delete file "' + f + '"')

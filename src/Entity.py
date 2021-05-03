@@ -278,6 +278,7 @@ def parse_entity_component(_token_iter, _logger, _filename):
     dfa.add_transition(EntityStateEnum.ENTITY, EntityStateEnum.NAME, '_*_',
                        _set_curr_entity_name)
     dfa.add_transition(EntityStateEnum.NAME, EntityStateEnum.IS, 'is')
+    dfa.add_transition(EntityStateEnum.NAME, EntityStateEnum.GENERIC, 'generic')
 
     # Parse generic syntax
     dfa.add_transition(EntityStateEnum.IS, EntityStateEnum.GENERIC, 'generic')
@@ -306,6 +307,7 @@ def parse_entity_component(_token_iter, _logger, _filename):
     dfa.add_transition(EntityStateEnum.GENERIC_END_SEMICOLON, EntityStateEnum.PORT, 'port')
 
     # Parse port syntax
+    dfa.add_transition(EntityStateEnum.NAME, EntityStateEnum.PORT, 'port')
     dfa.add_transition(EntityStateEnum.IS, EntityStateEnum.PORT, 'port')
     dfa.add_transition(EntityStateEnum.PORT, EntityStateEnum.PORT_OPEN_BRACK, '(')
 
