@@ -35,6 +35,8 @@ class App:
                        type=str, help="generate waveform of VHDL unit")
         g.add_argument("-u", "--upload", nargs=2, metavar=('path', 'unit'),
                        help="upload VHDL unit to board")
+        g.add_argument("-x", "--clean", action='store_true',
+                       help="clean compiled binaries and waveforms")
 
         args = self._parser.parse_args()
 
@@ -74,6 +76,10 @@ class App:
                 self._lint_files(files)
             else:
                 pp('error', 'Failed to lint - Invalid file/dir path.')
+
+        # @TODO: Clean up project
+        elif args.clean:
+            self._clean()
 
 
     def _analyze_file(self, filename):
@@ -162,6 +168,27 @@ class App:
         if returned_value.returncode != 0:
             exit(1)
         pp('success', 'Finished synthesizing successfully!')
+
+
+    def _clean(self):
+        pp('info', 'Cleaning current project ...')
+        vcd_files = [y for x in os.walk('.')
+                       for y in glob(os.path.join(x[0], '*.vcd'))]
+        fst_files = [y for x in os.walk('.')
+                       for y in glob(os.path.join(x[0], '*.vcd.fst'))]
+        cf_files  = [y for x in os.walk('.')
+                       for y in glob(os.path.join(x[0], '*.cf'))]
+
+        files_to_be_deleted = vcd_files + fst_files + cf_files
+
+        for f in files_to_be_deleted:
+            cmd = "rm -rf " + f
+            returned_value = subprocess.run(cmd, shell=True)
+            if returned_value.returncode != 0:
+                pp('error', 'Fail to delete file "' + f + '"')
+                exit(1)
+
+        pp('success', 'Current project is successfully cleaned')
 
 
     def _route_unit(self, filepath, unitname):
