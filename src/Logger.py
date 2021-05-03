@@ -15,7 +15,7 @@ import datetime
 class Logger:
     """ Represent the error logging class """
 
-    def __init__(self, init_logs=[], filename="turquoise.log"):
+    def __init__(self, init_logs=[], filename=".turquoise.log"):
         self._logs = init_logs
         self._filename = filename
 
@@ -37,4 +37,4 @@ class Logger:
 
     def print_logs_to_terminal(self):
         for (time, log) in self._logs:
-            print('{}: {}'.format(time, log))
+            print('{}: {}\n'.format(time, log))
