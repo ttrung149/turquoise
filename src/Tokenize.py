@@ -1,3 +1,13 @@
+#!/usr/bin/env python
+# -----------------------------------------------------------------------------
+#  Turquoise - VHDL linter and compilation toolchain
+#  Copyright (c) 2020-2021: Turquoise team
+#
+#  File name: Tokenize.py
+#
+#  Description: Implementation of tokenizer class
+#
+# -----------------------------------------------------------------------------
 from pyVHDLParser.Token.Parser import Tokenizer
 from pyVHDLParser.Blocks import TokenToBlockParser
 from pyVHDLParser.Base import ParserException

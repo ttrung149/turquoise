@@ -8,7 +8,6 @@
 #  Description: Implementation of Error class, Warning class, Info class
 #
 # -----------------------------------------------------------------------------
-
 from colored import fg, attr
 
 
