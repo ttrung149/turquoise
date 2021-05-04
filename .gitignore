@@ -13,7 +13,6 @@ __pycache__/
 .Python
 build/
 develop-eggs/
-dist/
 downloads/
 eggs/
 .eggs/
@@ -147,3 +146,5 @@ cython_debug/
 *.vcd.fst
 *.log
 *.cf
+dist/fpga-toolchain
+dist/gtkwave
