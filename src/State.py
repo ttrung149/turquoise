@@ -52,8 +52,6 @@ class DFA:
         self._success = False
 
     def step(self, _input_token) -> None:
-        print("current state is {}".format(self._curr_state))
-
         _input = _input_token.Value.lower()
         _from = self._curr_state
         if _input in self._transitions[_from]:

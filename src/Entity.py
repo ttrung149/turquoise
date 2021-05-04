@@ -21,7 +21,6 @@ from .Prims import STD_LOGIC, STD_LOGIC_VECTOR, BIT, SIGNED, UNSIGNED, \
                    INTEGER, BOOLEAN, TIME, STRING, \
                    parse_to_downto
 from .Messages import Error, Warning, Info
-from .Logger import Logger
 
 
 class EntityStateEnum(Enum):
@@ -63,7 +62,8 @@ def parse_entity_component(_token_iter, _logger, _filename):
     @param _token_iter Token Iteration
     @param _logger Logger instance
     @param _filename Current file name that is being linted
-    @return Tuple of parsed generic (if any), and parsed port (in that order)
+    @return Tuple of entity name, parsed generic (if any), and parsed
+            port (in that order)
     """
     parsed_generic = OrderedDict()
     parsed_port = OrderedDict()
@@ -76,7 +76,7 @@ def parse_entity_component(_token_iter, _logger, _filename):
     curr_entity_name = ''
 
     # Generics state
-    curr_generic_sig = ''
+    curr_generic_sigs = []
     curr_generic_sig_type = None
 
     def _set_is_component(name):
@@ -86,8 +86,8 @@ def parse_entity_component(_token_iter, _logger, _filename):
     # =========================================================================
     # DFA generic callbacks
     def _set_curr_generic_sig(name):
-        nonlocal curr_generic_sig
-        curr_generic_sig = name.Value.lower()
+        nonlocal curr_generic_sigs
+        curr_generic_sigs.append(name.Value.lower())
 
     def _set_generic_sig_type(name):
         nonlocal curr_generic_sig_type
@@ -149,17 +149,18 @@ def parse_entity_component(_token_iter, _logger, _filename):
             _logger.add_log(warn)
 
     def _add_to_parsed_generic(name):
-        nonlocal parsed_generic, curr_generic_sig, curr_generic_sig_type
+        nonlocal parsed_generic, curr_generic_sigs, curr_generic_sig_type
 
-        if curr_generic_sig not in parsed_generic:
-            parsed_generic[curr_generic_sig] = curr_generic_sig_type
-        else:
-            warn = Warning(name.Start, _filename,
-                           'Generic signal "' + curr_generic_sig + '" in entity "' +
-                           curr_entity_name + '" is already declared')
-            _logger.add_log(warn)
+        for sig in curr_generic_sigs:
+            if sig not in parsed_generic:
+                parsed_generic[sig] = curr_generic_sig_type
+            else:
+                warn = Warning(name.Start, _filename,
+                               'Generic signal "' + sig + '" in entity "' +
+                                curr_entity_name + '" is already declared')
+                _logger.add_log(warn)
 
-        curr_generic_sig = ''
+        curr_generic_sigs = []
         curr_generic_sig_type = None
 
     # =========================================================================
@@ -285,6 +286,8 @@ def parse_entity_component(_token_iter, _logger, _filename):
     dfa.add_transition(EntityStateEnum.GENERIC, EntityStateEnum.GENERIC_OPEN_BRACK, '(')
     dfa.add_transition(EntityStateEnum.GENERIC_OPEN_BRACK,
                        EntityStateEnum.GENERIC_NAME, '_*_', _set_curr_generic_sig)
+    dfa.add_transition(EntityStateEnum.GENERIC_NAME,
+                       EntityStateEnum.GENERIC_OPEN_BRACK, ',')
     dfa.add_transition(EntityStateEnum.GENERIC_NAME, EntityStateEnum.GENERIC_COLON, ':')
     dfa.add_transition(EntityStateEnum.GENERIC_COLON,
                        EntityStateEnum.GENERIC_TYPE, '_*_', _set_generic_sig_type)
@@ -313,7 +316,7 @@ def parse_entity_component(_token_iter, _logger, _filename):
 
     dfa.add_transition(EntityStateEnum.PORT_OPEN_BRACK,
                        EntityStateEnum.SIGNAL, '_*_', _append_sig)
-    dfa.add_transition(EntityStateEnum.SIGNAL, EntityStateEnum.SIGNAL, ',')
+    dfa.add_transition(EntityStateEnum.SIGNAL, EntityStateEnum.PORT_OPEN_BRACK, ',')
     dfa.add_transition(EntityStateEnum.SIGNAL, EntityStateEnum.SIGNAL_DONE, ':')
 
     # Parse in out type
