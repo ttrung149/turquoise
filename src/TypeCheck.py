@@ -18,7 +18,6 @@ def tc_entity_component(_entity_dict, _component_list, _logger):
     @param _logger Logger instance
     @return None
     """
-
     for component in _component_list:
         component_name, component_filename, parsed_component = component
 

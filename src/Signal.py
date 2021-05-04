@@ -5,7 +5,7 @@
 #
 #  File name: Signal.py
 #
-#  Description: Implementation of DFAs that parse through signal syntax
+#  Description: Implementation of DFAs that parse signal and constant syntax
 #
 # -----------------------------------------------------------------------------
 from pyVHDLParser.Token import StartOfDocumentToken, EndOfDocumentToken, \
@@ -19,7 +19,7 @@ from .State import DFA, State
 from .Prims import STD_LOGIC, STD_LOGIC_VECTOR, BIT, SIGNED, UNSIGNED, \
                    INTEGER, BOOLEAN, TIME, STRING, \
                    parse_to_downto
-from .Messages import Error, Warning
+from .Messages import Error, Warning, Info
 
 
 class SignalStateEnum(Enum):
@@ -130,6 +130,7 @@ def parse_signal(_token_iter, _logger, _filename):
 
     # Parse entity and port syntax
     dfa.add_transition(SignalStateEnum.START, SignalStateEnum.NAME, 'signal')
+    dfa.add_transition(SignalStateEnum.START, SignalStateEnum.NAME, 'constant')
     dfa.add_transition(SignalStateEnum.NAME, SignalStateEnum.COLON, '_*_',
                        _set_signal_name)
     dfa.add_transition(SignalStateEnum.COLON, SignalStateEnum.NAME, ',')
@@ -168,6 +169,9 @@ def parse_signal(_token_iter, _logger, _filename):
             _logger.add_log(err)
             break
 
+        except StopIteration:
+            break
+
     # Add specific warnings and errors to logger
     if not dfa.is_finished_successfully:
         if dfa.get_curr_state == SignalStateEnum.SEMICOLON:
@@ -182,7 +186,6 @@ def parse_signal(_token_iter, _logger, _filename):
                         curr_token.Value.lower() + '"')
             _logger.add_log(err)
 
-    if not dfa.is_finished_successfully:
         return None
 
     return parsed_sigs

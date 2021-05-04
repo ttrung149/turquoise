@@ -266,6 +266,19 @@ def parse_entity_component(_token_iter, _logger, _filename):
                         '"' + name.Value.lower() + '"')
             _logger.add_log(err)
 
+    def _check_end_component(name):
+        nonlocal curr_entity_name, is_component
+        if not is_component:
+            err = Error(name.Start, _filename,
+                        'Expecting ";" at the end of entity')
+            _logger.add_log(err)
+
+        elif is_component and name.Value.lower() != curr_entity_name:
+            err = Error(name.Start, _filename,
+                        'Expecting component "' + curr_entity_name + '", got: ' +
+                        '"' + name.Value.lower() + '"')
+            _logger.add_log(err)
+
     # =========================================================================
     # Build parse_entity DFA
     # =========================================================================
@@ -344,6 +357,8 @@ def parse_entity_component(_token_iter, _logger, _filename):
     dfa.add_transition(EntityStateEnum.END,
                        EntityStateEnum.END_NAME, '_*_', _check_entity_name)
     dfa.add_transition(EntityStateEnum.END_NAME, EntityStateEnum.SUCCESS, ';')
+    dfa.add_transition(EntityStateEnum.END_NAME,
+                       EntityStateEnum.END_NAME, '_*_', _check_end_component)
 
     # =========================================================================
     # Token stream iteration
@@ -364,6 +379,9 @@ def parse_entity_component(_token_iter, _logger, _filename):
         except ParserException as ex:
             err = Error(token.Start, _filename, str(ex))
             _logger.add_log(err)
+            break
+
+        except StopIteration:
             break
 
     # Add specific warnings and errors to logger
