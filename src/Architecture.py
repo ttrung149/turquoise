@@ -30,9 +30,11 @@ class ArchStateEnum(Enum):
     IS = State(5)
     BEGIN_ARCH = State(6)
     NEW_BEGIN_BLK = State(7)
-    END = State(8)
-    END_ARCH = State(9)
-    SUCCESS = State(10)
+    ASSIGN = State(8)
+    ASSIGN_NEW_BEGIN_BLK = State(9)
+    END = State(10)
+    END_ARCH = State(11)
+    SUCCESS = State(12)
 
 
 class Architecture:
@@ -55,6 +57,9 @@ class Architecture:
 
     def add_declared_component(self, component):
         self._declared_components.append(component)
+
+    def add_assigned_signal(self, token):
+        self._assigned_signals.append(token)
 
     @property
     def name(self):
@@ -87,6 +92,10 @@ def parse_architecture(_token_iter, _logger, _filename):
     @param _filename Current file name that is being linted
     @return Parsed Architecture class
     """
+    # Token tracker
+    curr_token = None
+    prev_token = None
+
     parsed = Architecture()
     arch_name = ''
     entity_name = ''
@@ -125,6 +134,10 @@ def parse_architecture(_token_iter, _logger, _filename):
                 for signal_name in signal_dict:
                     parsed.add_declared_signal(signal_name, signal_dict[signal_name])
 
+    def _add_assigned_token(name):
+        nonlocal prev_token, parsed
+        parsed.add_assigned_signal(prev_token.Value)
+
     # =========================================================================
     # Build parse_architecture DFA
     # =========================================================================
@@ -142,7 +155,15 @@ def parse_architecture(_token_iter, _logger, _filename):
                        _add_components_and_sigs)
 
     dfa.add_transition(ArchStateEnum.IS, ArchStateEnum.BEGIN_ARCH, 'begin')
+    dfa.add_transition(ArchStateEnum.BEGIN_ARCH,
+                       ArchStateEnum.ASSIGN, '<=', _add_assigned_token)
+    dfa.add_transition(ArchStateEnum.ASSIGN, ArchStateEnum.BEGIN_ARCH, '_*_')
     dfa.add_transition(ArchStateEnum.BEGIN_ARCH, ArchStateEnum.NEW_BEGIN_BLK, 'begin')
+    dfa.add_transition(ArchStateEnum.NEW_BEGIN_BLK,
+                       ArchStateEnum.ASSIGN_NEW_BEGIN_BLK, '<=', _add_assigned_token)
+    dfa.add_transition(ArchStateEnum.ASSIGN_NEW_BEGIN_BLK,
+                       ArchStateEnum.NEW_BEGIN_BLK, '_*_')
+
     dfa.add_transition(ArchStateEnum.NEW_BEGIN_BLK, ArchStateEnum.NEW_BEGIN_BLK, '_*_')
     dfa.add_transition(ArchStateEnum.NEW_BEGIN_BLK, ArchStateEnum.BEGIN_ARCH, 'end')
 
@@ -155,7 +176,6 @@ def parse_architecture(_token_iter, _logger, _filename):
     # =========================================================================
     # Token stream iteration
     # =========================================================================
-    curr_token = None
     while not dfa.is_finished:
         try:
             token = next(_token_iter)
@@ -166,6 +186,7 @@ def parse_architecture(_token_iter, _logger, _filename):
                 pass
             else:
                 dfa.step(token)
+                prev_token = token
 
         except ParserException as ex:
             err = Error(token.Start, _filename, str(ex))
@@ -175,8 +196,9 @@ def parse_architecture(_token_iter, _logger, _filename):
         except StopIteration:
             break
 
-    # Add specific warnings and errors to logger
+    # @TODO Add specific warnings and errors to logger
     if not dfa.is_finished_successfully:
         return None
 
+    # print(parsed._assigned_signals)
     return parsed
