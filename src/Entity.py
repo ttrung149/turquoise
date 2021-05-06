@@ -56,14 +56,92 @@ class EntityStateEnum(Enum):
     SUCCESS = State(25)
 
 
+class EntityComponent:
+    def __init__(self, _is_component, _name, _generics, _ports):
+        self._name = _name
+        self._is_component = _is_component
+        self._generics = _generics
+        self._ports = _ports
+
+    @property
+    def name(self):
+        return self._name
+
+    @property
+    def is_component(self):
+        return self._is_component
+
+    @property
+    def generics(self):
+        return self._generics
+
+    @property
+    def ports(self):
+        return self._ports
+
+    def __str__(self):
+        if self._is_component:
+            return 'COMPONENT {}'.format(self._name)
+        else:
+            return 'ENTITY {}'.format(self._name)
+
+    def __repr__(self):
+        if self._is_component:
+            return 'COMPONENT {}'.format(self._name)
+        else:
+            return 'ENTITY {}'.format(self._name)
+
+
+class EntityPortSignalTypeToken:
+    def __init__(self, _inout, _type, _line):
+        self._inout = _inout
+        self._type = _type
+        self._line = _line
+
+    def __eq__(self, other):
+        if not isinstance(other, EntityPortSignalTypeToken):
+            return False
+        return self._inout == other._inout and self._type == other._type
+
+    @property
+    def line(self):
+        return self._line
+
+    def __str__(self):
+        return '({}) {}'.format(self._inout, self._type)
+
+    def __repr__(self):
+        return '({}) {}'.format(self._inout, self._type)
+
+
+class EntityGenericSignalTypeToken:
+    def __init__(self, _type, _line):
+        self._type = _type
+        self._line = _line
+
+    def __eq__(self, other):
+        if not isinstance(other, EntityGenericSignalTypeToken):
+            return False
+        return self._type == other._type
+
+    @property
+    def line(self):
+        return self._line
+
+    def __str__(self):
+        return '{}'.format(self._type)
+
+    def __repr__(self):
+        return '{}'.format(self._type)
+
+
 def parse_entity_component(_token_iter, _logger, _filename):
     """
     @brief Helper function. Parse entity/component object
     @param _token_iter Token Iteration
     @param _logger Logger instance
     @param _filename Current file name that is being linted
-    @return Tuple of entity name, parsed generic (if any), and parsed
-            port (in that order)
+    @return EntityComponent
     """
     parsed_generic = OrderedDict()
     parsed_port = OrderedDict()
@@ -153,7 +231,7 @@ def parse_entity_component(_token_iter, _logger, _filename):
 
         for sig in curr_generic_sigs:
             if sig not in parsed_generic:
-                parsed_generic[sig] = curr_generic_sig_type
+                parsed_generic[sig] = EntityGenericSignalTypeToken(curr_generic_sig_type, name.Start)
             else:
                 warn = Warning(name.Start, _filename,
                                'Generic signal "' + sig + '" in entity "' +
@@ -241,7 +319,7 @@ def parse_entity_component(_token_iter, _logger, _filename):
 
         for sig in curr_sigs:
             if sig not in parsed_port:
-                parsed_port[sig] = (curr_sig_in_out, curr_sig_type)
+                parsed_port[sig] = EntityPortSignalTypeToken(curr_sig_in_out, curr_sig_type, name.Start)
             else:
                 warn = Warning(name.Start, _filename,
                                'Signal "' + sig + '" in entity "' + curr_entity_name +
@@ -423,4 +501,4 @@ def parse_entity_component(_token_iter, _logger, _filename):
 
         return None
 
-    return (curr_entity_name, parsed_generic, parsed_port)
+    return EntityComponent(is_component, curr_entity_name, parsed_generic, parsed_port)
