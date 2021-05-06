@@ -108,6 +108,14 @@ class EntityPortSignalTypeToken:
     def line(self):
         return self._line
 
+    @property
+    def inout(self):
+        return self._inout
+
+    @property
+    def type(self):
+        return self._type
+
     def __str__(self):
         return '({}) {}'.format(self._inout, self._type)
 
@@ -128,6 +136,10 @@ class EntityGenericSignalTypeToken:
     @property
     def line(self):
         return self._line
+
+    @property
+    def type(self):
+        return self._type
 
     def __str__(self):
         return '{}'.format(self._type)

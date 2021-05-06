@@ -41,10 +41,11 @@ class Architecture:
     def __init__(self):
         self._name = ''
         self._entity_name = ''
-        self._declared_signals = []
+        self._declared_signals = {}
         self._declared_components = []
         self._portmaps = []
         self._assigned_signals = []
+        self._body_tokens = []
 
     def set_name(self, name):
         self._name = name
@@ -53,13 +54,16 @@ class Architecture:
         self._entity_name = name
 
     def add_declared_signal(self, signal_name, signal_type):
-        self._declared_signals.append((signal_name, signal_type))
+        self._declared_signals[signal_name] = signal_type
 
     def add_declared_component(self, component):
         self._declared_components.append(component)
 
     def add_assigned_signal(self, token):
         self._assigned_signals.append(token)
+
+    def add_body_token(self, token):
+        self._body_tokens.append(token)
 
     @property
     def name(self):
@@ -76,6 +80,14 @@ class Architecture:
     @property
     def declared_signals(self):
         return self._declared_signals
+
+    @property
+    def assigned_signals(self):
+        return self._assigned_signals
+
+    @property
+    def body_tokens(self):
+        return self._body_tokens
 
     def __str__(self):
         return 'ARCHITECTURE {} of {}'.format(self._name, self._entity_name)
@@ -136,7 +148,11 @@ def parse_architecture(_token_iter, _logger, _filename):
 
     def _add_assigned_token(name):
         nonlocal prev_token, parsed
-        parsed.add_assigned_signal(prev_token.Value)
+        parsed.add_assigned_signal(prev_token)
+
+    def _add_body_token(name):
+        nonlocal parsed
+        parsed.add_body_token(name)
 
     # =========================================================================
     # Build parse_architecture DFA
@@ -157,17 +173,20 @@ def parse_architecture(_token_iter, _logger, _filename):
     dfa.add_transition(ArchStateEnum.IS, ArchStateEnum.BEGIN_ARCH, 'begin')
     dfa.add_transition(ArchStateEnum.BEGIN_ARCH,
                        ArchStateEnum.ASSIGN, '<=', _add_assigned_token)
-    dfa.add_transition(ArchStateEnum.ASSIGN, ArchStateEnum.BEGIN_ARCH, '_*_')
+    dfa.add_transition(ArchStateEnum.ASSIGN,
+                       ArchStateEnum.BEGIN_ARCH, '_*_', _add_body_token)
     dfa.add_transition(ArchStateEnum.BEGIN_ARCH, ArchStateEnum.NEW_BEGIN_BLK, 'begin')
     dfa.add_transition(ArchStateEnum.NEW_BEGIN_BLK,
                        ArchStateEnum.ASSIGN_NEW_BEGIN_BLK, '<=', _add_assigned_token)
     dfa.add_transition(ArchStateEnum.ASSIGN_NEW_BEGIN_BLK,
-                       ArchStateEnum.NEW_BEGIN_BLK, '_*_')
+                       ArchStateEnum.NEW_BEGIN_BLK, '_*_', _add_body_token)
 
-    dfa.add_transition(ArchStateEnum.NEW_BEGIN_BLK, ArchStateEnum.NEW_BEGIN_BLK, '_*_')
+    dfa.add_transition(ArchStateEnum.NEW_BEGIN_BLK,
+                       ArchStateEnum.NEW_BEGIN_BLK, '_*_', _add_body_token)
     dfa.add_transition(ArchStateEnum.NEW_BEGIN_BLK, ArchStateEnum.BEGIN_ARCH, 'end')
 
-    dfa.add_transition(ArchStateEnum.BEGIN_ARCH, ArchStateEnum.BEGIN_ARCH, '_*_')
+    dfa.add_transition(ArchStateEnum.BEGIN_ARCH,
+                       ArchStateEnum.BEGIN_ARCH, '_*_', _add_body_token)
     dfa.add_transition(ArchStateEnum.BEGIN_ARCH, ArchStateEnum.END, 'end')
     dfa.add_transition(ArchStateEnum.END, ArchStateEnum.SUCCESS, ';')
     dfa.add_transition(ArchStateEnum.END, ArchStateEnum.END_ARCH, '_*_')
@@ -186,7 +205,12 @@ def parse_architecture(_token_iter, _logger, _filename):
                 pass
             else:
                 dfa.step(token)
-                prev_token = token
+
+                # Update previous token (a little hacky)
+                # This is used to get port map's name and assigned tokens
+                if token.Value.lower() != '(' and token.Value.lower() != ')' and \
+                   not token.Value.isdigit() and token.Value.lower() != 'downto':
+                    prev_token = token
 
         except ParserException as ex:
             err = Error(token.Start, _filename, str(ex))
@@ -200,5 +224,4 @@ def parse_architecture(_token_iter, _logger, _filename):
     if not dfa.is_finished_successfully:
         return None
 
-    # print(parsed._assigned_signals)
     return parsed

@@ -24,7 +24,7 @@ class App:
     def __init__(self, _logger):
         self._logger = _logger
         self._parser = argparse.ArgumentParser(
-            description='Turquoise: VHDL Linter + Compilation Toolchain'
+            description='Turquoise: VHDL static code analyzer + Compilation Toolchain'
         )
 
         g = self._parser.add_mutually_exclusive_group()

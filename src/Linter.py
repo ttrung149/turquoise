@@ -20,6 +20,7 @@ from .Entity import parse_entity_component
 from .Architecture import parse_architecture
 from .Signal import parse_signal
 from .TypeCheck import tc_entity_component
+from .UsedCheck import check_signal_assigned_not_declared, check_signal_declared_not_used
 
 class Linter:
 
@@ -31,6 +32,8 @@ class Linter:
         # @TODO: add more stats
         self._logger.print_logs_to_terminal()
         self._logger.print_logs_to_file()
+        self._logger.print_status()
+
 
     def lint(self):
         """ Perform linting on provided files """
@@ -86,8 +89,7 @@ class Linter:
                                                duplicated_arch_filename + '"')
                                 self._logger.add_log(warn)
                             else:
-                                architecture_dict[arch.entity_name] = (f, arch)
-
+                                architecture_dict[arch.entity_name] = (f, arch, token.Start)
                     else:
                         continue
 
@@ -99,11 +101,45 @@ class Linter:
                 err = Error(token.Start, f, str(ex))
                 self._logger.add_log(err)
 
-        # print(entity_dict)
-        # print(architecture_dict)
-
-        # Perform entity component typecheck
+        # Architecture list iteration
         for arch_name in architecture_dict:
-            filename, architecture = architecture_dict[arch_name]
+            filename, architecture, line = architecture_dict[arch_name]
+
+            # Perform entity component typecheck
+            # ----------------------------------
             component_list = architecture.declared_components
             tc_entity_component(entity_dict, component_list, filename, self._logger)
+
+            # Perform assigned but not declared check
+            # ---------------------------------------
+            _declared = dict(architecture.declared_signals)
+            if arch_name not in entity_dict:
+                err = Error(line, filename,
+                            'No matching entity found for architecture "' + arch_name + '"')
+                self._logger.add_log(err)
+            else:
+                _, entity = entity_dict[arch_name]
+
+                # Add generic signals to declared signal dict
+                for sig in entity.generics:
+                    if sig in _declared:
+                        warn = Warning(line, filename, 'Re-declaration of signal "' + sig + '"')
+                        self._logger.add_log(warn)
+                    else:
+                        _declared[sig] = entity.generics[sig].type
+
+                # Add port signal to declared signals
+                for sig in entity.ports:
+                    if sig in _declared:
+                        warn = Warning(line, filename, 'Re-declaration of signal "' + sig + '"')
+                        self._logger.add_log(warn)
+                    else:
+                        _declared[sig] = entity.ports[sig].type
+
+                _assigned = architecture.assigned_signals
+                check_signal_assigned_not_declared(_declared, _assigned, filename, self._logger)
+
+            # Perform declared but not used check
+            # -----------------------------------
+            check_signal_declared_not_used(architecture.declared_signals,
+                                           architecture.body_tokens, filename, self._logger)
