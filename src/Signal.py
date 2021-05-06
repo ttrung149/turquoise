@@ -39,7 +39,7 @@ def parse_signal(_token_iter, _logger, _filename):
     @param _token_iter Token Iteration
     @param _logger Logger instance
     @param _filename Current file name that is being linted
-    @return Tuple of signal name and type
+    @return Dictionary of signal name and type
     """
     parsed_sigs = {}
     signal_type = None

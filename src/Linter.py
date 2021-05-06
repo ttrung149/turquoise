@@ -14,9 +14,11 @@ from pyVHDLParser.Token import StartOfDocumentToken, EndOfDocumentToken, \
                                IndentationToken
 from pyVHDLParser.Base import ParserException
 from itertools import chain
-from .Messages import Error, Warning
+from .Messages import Error, Warning, pp
 from .Tokenize import Tokenize
 from .Entity import parse_entity_component
+from .Architecture import parse_architecture
+from .Signal import parse_signal
 from .TypeCheck import tc_entity_component
 
 class Linter:
@@ -35,10 +37,12 @@ class Linter:
 
         # Global states
         entity_dict = {}
-        component_list = []
+        architecture_dict = {}
 
         # Lint through a list of files
         for f in self._filenames:
+            pp('info', 'Linting "' + f + '" ...')
+
             tokenize = Tokenize(f)
             token_iter = tokenize.get_token_iter()
 
@@ -50,33 +54,41 @@ class Linter:
                                   IndentationToken, CommentToken)):
                         continue
 
-                    # Parse entity
+                    # Parse entity, add to global state
                     if token.Value.lower() == 'entity':
                         token_iter = chain([token], token_iter)
                         entity = parse_entity_component(token_iter, self._logger, f)
 
                         if entity is not None:
-                            if entity[0] in entity_dict:
-                                duplicated_entity_filename = entity_dict[entity[0]][0]
+                            if entity.name in entity_dict:
+                                duplicated_entity_filename = entity_dict[entity.name][0]
                                 warn = Warning(token.Start, f,
                                                'Duplicated entity declaration found. ' +
-                                               'Entity "' + entity[0] +
+                                               'Entity "' + entity.name +
                                                '" was previously declared in "' +
                                                duplicated_entity_filename + '"')
                                 self._logger.add_log(warn)
                             else:
-                                entity_dict[entity[0]] = (f, entity)
+                                entity_dict[entity.name] = (f, entity)
 
-                    # Parse component
-                    elif token.Value.lower() == 'component':
+                    # Parse architecture, add to global state
+                    elif token.Value.lower() == 'architecture':
                         token_iter = chain([token], token_iter)
-                        component = parse_entity_component(token_iter, self._logger, f)
+                        arch = parse_architecture(token_iter, self._logger, f)
 
-                        if component is not None:
-                            component_list.append((component[0], f, component))
+                        if arch is not None:
+                            if arch.entity_name in architecture_dict:
+                                duplicated_arch_filename = arch_dict[arch.entity_name][0]
+                                warn = Warning(token.Start, f,
+                                               'Duplicated architecture declaration found. ' +
+                                               'Archtecture for entity "' + arch.entity_name +
+                                               '" was previously declared in "' +
+                                               duplicated_arch_filename + '"')
+                                self._logger.add_log(warn)
+                            else:
+                                architecture_dict[arch.entity_name] = (f, arch)
 
                     else:
-                        print('TOKEN IS {}'.format(token))
                         continue
 
             except ParserException as ex:
@@ -87,4 +99,11 @@ class Linter:
                 err = Error(token.Start, f, str(ex))
                 self._logger.add_log(err)
 
-        tc_entity_component(entity_dict, component_list, self._logger)
+        # print(entity_dict)
+        # print(architecture_dict)
+
+        # Perform entity component typecheck
+        for arch_name in architecture_dict:
+            filename, architecture = architecture_dict[arch_name]
+            component_list = architecture.declared_components
+            tc_entity_component(entity_dict, component_list, filename, self._logger)

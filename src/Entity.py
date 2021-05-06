@@ -37,7 +37,6 @@ class EntityStateEnum(Enum):
     GENERIC_TYPE = State(8)
     GENERIC_ASSIGNMENT = State(9)
     GENERIC_VALUE = State(10)
-    GENERIC_SEMICOLON = State(11)
     GENERIC_CLOSE_BRACK = State(12)
     GENERIC_END_SEMICOLON = State(13)
 
@@ -49,11 +48,13 @@ class EntityStateEnum(Enum):
     NEXT_SIGNAL = State(18)
     SIGNAL_IN_OUT = State(19)
     SIGNAL_TYPE = State(20)
-    PORT_CLOSE_BRACK = State(21)
-    PORT_SEMICOLON = State(22)
-    END = State(23)
-    END_NAME = State(24)
-    SUCCESS = State(25)
+    SIGNAL_ASSIGNMENT = State(21)
+    SIGNAL_VALUE = State(22)
+    PORT_CLOSE_BRACK = State(23)
+    PORT_SEMICOLON = State(24)
+    END = State(25)
+    END_NAME = State(26)
+    SUCCESS = State(27)
 
 
 class EntityComponent:
@@ -423,6 +424,16 @@ def parse_entity_component(_token_iter, _logger, _filename):
     # Parse in signal type
     dfa.add_transition(EntityStateEnum.SIGNAL_IN_OUT,
                        EntityStateEnum.SIGNAL_TYPE, '_*_', _set_sig_type)
+
+
+    dfa.add_transition(EntityStateEnum.SIGNAL_TYPE, EntityStateEnum.SIGNAL_ASSIGNMENT, ':=')
+    dfa.add_transition(EntityStateEnum.SIGNAL_ASSIGNMENT, EntityStateEnum.SIGNAL_VALUE, '_*_')
+    dfa.add_transition(EntityStateEnum.SIGNAL_VALUE, EntityStateEnum.SIGNAL_VALUE, '_*_')
+    dfa.add_transition(EntityStateEnum.SIGNAL_VALUE,
+                       EntityStateEnum.PORT_OPEN_BRACK, ';', _add_to_parsed_port)
+    dfa.add_transition(EntityStateEnum.SIGNAL_VALUE,
+                       EntityStateEnum.PORT_CLOSE_BRACK, ')', _add_to_parsed_port)
+
     dfa.add_transition(EntityStateEnum.SIGNAL_TYPE,
                        EntityStateEnum.PORT_OPEN_BRACK, ';', _add_to_parsed_port)
     dfa.add_transition(EntityStateEnum.SIGNAL_TYPE,
