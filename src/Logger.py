@@ -10,6 +10,7 @@
 # -----------------------------------------------------------------------------
 import sys
 import datetime
+from .Messages import Error, Warning, pp
 
 
 class Logger:
@@ -19,7 +20,8 @@ class Logger:
         self._logs = init_logs
         self._filename = filename
 
-    def get_logs(self):
+    @property
+    def logs(self):
         return self._logs
 
     def add_log(self, log):
@@ -33,8 +35,23 @@ class Logger:
             sys.stdout = f
             for (time, log) in self._logs:
                 print('{}: {}'.format(time, log._message))
+
+            self.print_status()
             sys.stdout = orig_stdout
 
     def print_logs_to_terminal(self):
         for (time, log) in self._logs:
             print('{}: {}\n'.format(time, log))
+
+    def print_status(self):
+        num_err = 0
+        num_warn = 0
+        for (_, log) in self._logs:
+            if isinstance(log, Error):
+                num_err += 1
+            elif isinstance(log, Warning):
+                num_warn += 1
+
+        print('-----------------------------------------------------')
+        pp('info', 
+           'LINT STATUS: {} error(s), {} warning(s) found.'.format(num_err, num_warn))
