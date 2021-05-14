@@ -4,7 +4,8 @@ VHDL linter and compilation toolchain for the FPGA Upduino V3 board
 
 ## Installing
 
-@TODO: Add package
+1) Install the python libraries `colored` and `pyVHDLParser` using pip.
+2) 
 
 ## Linter features supported
 
