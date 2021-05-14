@@ -65,12 +65,12 @@ def pp(_status, _message):
     """
     reset = attr('reset')
     if _status == 'success':
-        print(fg('light_green') + 'SUCCESS: ' + _message + reset + '\n')
+        print(fg('light_green') + 'SUCCESS: ' + str(_message) + str(reset) + '\n')
     elif _status == 'warning':
-        print(fg('light_yellow') + 'WARNING: ' + _message + reset + '\n')
+        print(fg('light_yellow') + 'WARNING: ' + str(_message) + str(reset) + '\n')
     elif _status == 'error':
-        print(fg('light_red') + 'ERR: ' + _message + reset + '\n')
+        print(fg('light_red') + 'ERR: ' + str(_message) + str(reset) + '\n')
     elif _status == 'info':
-        print('INFO: ' + _message + '\n')
+        print('INFO: ' + str(_message) + '\n')
     else:
         print('\n')
