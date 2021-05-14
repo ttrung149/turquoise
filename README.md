@@ -15,7 +15,7 @@ VHDL linter and compilation toolchain for the FPGA Upduino V3 board
 ## Running
 
 1) To launch the application, cd into the `turquoise-master` directory and run the command `python3 . -h`.
-2) You can run the compiler on the examples we have provided using the command `python3 . -c Examples`. You can also provide the path to a single file instead of an entire directory. The same applies for analyzing with the `-a` flag and the linter with the `-l` flag. Make sure that the directory that contains your code is somwhere inside the turquoise-blue folder.
+2) You can run the compiler on the examples we have provided using the command `python3 . -c Examples`. You can also provide the path to a single file instead of an entire directory such as `python3 . -c Examples/AND2/AND2.vhdl`. The same applies for analyzing with the `-a` flag and the linter with the `-l` flag. Make sure that the directory that contains your code is somwhere inside the turquoise-blue folder.
 3) When generating waveforms, the provided path must contain all the files needed to successfully run the simulation. The unit name is the name of the entity that you are running the simulation on.
 4) Same applies to uploading code to the board. Make sure the Upduino board is connected to your computer and that your .pcf file is in the same directory as the rest of your code. The unit name is the name of the top-level entity that you are uploading to the board.
 
