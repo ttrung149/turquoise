@@ -11,6 +11,7 @@ VHDL linter and compilation toolchain for the FPGA Upduino V3 board
 5) Download the fpga-toolchain as a zipped file: https://drive.google.com/file/d/1cnvAypqYposi_YmEpbKnw8qrSvT3U0Ln/view?usp=sharing
 6) Unzip it and move it under the `dist` directory alongside the gtkwave folder.
 7) You're all set!
+8) NOTE: When you try to run the commands, your MacOS system may ask you to verify that the software you are using can be trusted. Without confirming this, you will not be able to run the program. To enable this, go to Settings -> Security & Privacy and click Allow when prompted. You may have to repeat this a few times for each of the following binaries: ghdl, yosys, gtkwave, nextpnr-ice40, icepack, and iceprog.
 
 ## Running
 
