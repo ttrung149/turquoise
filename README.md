@@ -5,7 +5,10 @@ VHDL linter and compilation toolchain for the FPGA Upduino V3 board
 ## Installing
 
 1) Install the python libraries `colored` and `pyVHDLParser` using pip.
-2) 
+2) Download the project as a .zip file from the main branch of this repo and unzip it.
+3) Inside the `dist` directory, unzip gtkwave.zip.
+4) Download the fpga-toolchain as a zipped file: https://drive.google.com/file/d/1cnvAypqYposi_YmEpbKnw8qrSvT3U0Ln/view?usp=sharing
+5) Unzip it and move it under the `dist` directory alongside the gtkwave folder.
 
 ## Linter features supported
 
