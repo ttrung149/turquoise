@@ -26,7 +26,7 @@ class Error:
     def __repr__(self):
         color = fg('light_red')
         reset = attr('reset')
-        return (color + self._message + reset)
+        return (color + str(self._message) + reset)
 
 
 class Warning:
@@ -44,7 +44,7 @@ class Warning:
     def __repr__(self):
         color = fg('light_yellow')
         reset = attr('reset')
-        return (color + self._message + reset)
+        return (color + str(self._message) + reset)
 
 class Info:
     """
@@ -57,7 +57,7 @@ class Info:
     def __repr__(self):
         color = fg('light_blue')
         reset = attr('reset')
-        return (color + self._message + reset)
+        return (color + str(self._message) + reset)
 
 def pp(_status, _message):
     """
